@@ -3,7 +3,26 @@
 (function () {
   'use strict';
 
-  var API = '/server/parandur_api/api';
+  /**
+   * The UI is served from Slate; the function lives on the Catalyst domain.
+   * Same-origin only works when both are served from Catalyst, so default to
+   * the absolute function URL and allow an override without a rebuild:
+   *   window.PARANDUR_API = 'https://.../server/parandur_api/api'
+   * or  ?api=... in the query string.
+   */
+  var DEFAULT_API =
+    'https://parandurairportplanner-60083086752.development.catalystserverless.in/server/parandur_api/api';
+
+  var API = (function () {
+    var q = new URLSearchParams(window.location.search).get('api');
+    if (q) return q.replace(/\/$/, '');
+    if (window.PARANDUR_API) return String(window.PARANDUR_API).replace(/\/$/, '');
+    // Served from Catalyst itself? Then a relative path is fine.
+    if (/catalystserverless\.(in|com)$/i.test(window.location.hostname)) {
+      return '/server/parandur_api/api';
+    }
+    return DEFAULT_API;
+  })();
   var TOKEN_KEY = 'parandur.session';
   var state = { data: null, selection: null, user: null };
 

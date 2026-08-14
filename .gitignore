@@ -1,1 +1,13 @@
+node_modules/
+.catalyst/
+.zcatalyst/
+*.log
+.env
+.env.*
+.DS_Store
 files.zip
+self_client.json
+*.tar.gz
+HANDOFF*.md
+parandur-build-plan-*.md
+parandur-schema-and-mcp-prompt.md

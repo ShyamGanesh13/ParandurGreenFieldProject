@@ -1,0 +1,9 @@
+{
+  "name": "parandur_api",
+  "version": "1.0.0",
+  "description": "API facade over Zoho Projects for the Parandur land and resettlement control room",
+  "main": "index.js",
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "deployment": {
+    "name": "parandur_api",
+    "stack": "node20",
+    "type": "advancedio",
+    "target_dir": "/",
+    "source": "index.js",
+    "memory": 256,
+    "timeout": 30,
+    "description": "API facade over Zoho Projects for the Parandur land and resettlement control room."
+  }
+}

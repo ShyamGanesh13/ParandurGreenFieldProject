@@ -44,9 +44,24 @@ This application makes that gap the headline number.
 
 ## Architecture
 
+The UI is served by **Slate** and the API by a **serverless function**, and these
+sit on different origins:
+
+| Piece | Origin |
+|---|---|
+| UI (Slate, deployed from this repo) | `https://<app>.onslate.in` |
+| API (AdvancedIO function) | `https://<project>.development.catalystserverless.in/server/parandur_api` |
+
+So every API call is cross-origin. The function carries its own CORS allow-list
+(`*.onslate.in`, `*.catalystserverless.in/.com`, localhost) and authentication
+travels as a bearer token rather than a cookie, so no credentialed CORS is needed.
+The client resolves its API base at runtime — `?api=<url>`, then
+`window.PARANDUR_API`, then a relative path if it is itself served from Catalyst,
+then the hardcoded default — so the two halves can move without a rebuild.
+
 ```
-Browser (Catalyst Slate, vanilla JS)
-   │  Catalyst Authentication gates the UI
+Browser (Slate, vanilla JS)
+   │  shared-credential sign-in, HMAC-signed bearer token
    ▼
 /server/parandur_api  (Catalyst AdvancedIO function, Node 20)
    │  holds the OAuth refresh token; the browser never sees a Zoho token
@@ -73,13 +88,27 @@ rather than reimplementing them in a custom picklist.
 Prerequisites: `npm i -g zcatalyst-cli`, and a Zoho Projects portal with the schema
 below.
 
-```bash
-# 1. authenticate the CLI against the same account as the portal
-catalyst login
+The two halves deploy by different routes.
 
-# 2. from the repo root
-catalyst deploy
+**The function** — via the CLI, because Slate does not host serverless functions:
+
+```bash
+catalyst login
+catalyst deploy --only functions
 ```
+
+**The UI** — via Slate, from this GitHub repository. In the Catalyst console under
+Slate, point the app at this repo, branch `main`, and set the app root to
+`client/`. Slate serves it as a static app; there is no build step.
+
+Verify the function is actually there before debugging the UI:
+
+```bash
+curl https://<project>.development.catalystserverless.in/server/parandur_api/api/health
+```
+
+An empty function list in the console means `catalyst deploy` never ran, and every
+data call in the UI will 404 no matter what the front end does.
 
 If `catalyst deploy` complains about the project configuration, run `catalyst init`
 in a scratch directory, choose *Functions (AdvancedIO, Node)* and *Web Client*, then
@@ -102,6 +131,7 @@ commit them.
 | `ANTHROPIC_API_KEY` | Optional. Without it, triage falls back to keyword rules |
 | `APP_USERNAME` / `APP_PASSWORD` | Optional. Overrides the built-in demo login |
 | `APP_SESSION_SECRET` | Optional but recommended. HMAC key for session tokens |
+| `APP_ALLOWED_ORIGINS` | Optional. Extra CORS origins, comma separated |
 
 Required OAuth scopes:
 

@@ -1,0 +1,10 @@
+{
+  "project_name": "ParandurAirportPlanner",
+  "project_id": 51859000000013054,
+  "functions": {
+    "source": "functions"
+  },
+  "client": {
+    "source": "client"
+  }
+}

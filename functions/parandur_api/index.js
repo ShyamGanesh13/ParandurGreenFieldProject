@@ -63,6 +63,44 @@ const APP_USERS = [
 const SESSION_SECRET = process.env.APP_SESSION_SECRET || 'parandur-dev-secret-change-me';
 const SESSION_HOURS = 12;
 
+/**
+ * CORS. The UI is served from Slate (*.onslate.in) while this function lives on
+ * *.catalystserverless.in, so every call is cross-origin. Auth travels as a
+ * bearer token rather than a cookie, so credentials are not needed and the
+ * allow-list can stay strict.
+ */
+const ALLOWED_ORIGIN_PATTERNS = [
+  /^https:\/\/(?:[a-z0-9-]+\.)+onslate\.in$/i,
+  /^https:\/\/(?:[a-z0-9-]+\.)+catalystserverless\.in$/i,
+  /^https:\/\/(?:[a-z0-9-]+\.)+catalystserverless\.com$/i,
+  /^http:\/\/localhost(:\d+)?$/i,
+  /^http:\/\/127\.0\.0\.1(:\d+)?$/i
+];
+
+const EXTRA_ORIGINS = (process.env.APP_ALLOWED_ORIGINS || '')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
+
+function originAllowed(origin) {
+  if (!origin) return false;
+  if (EXTRA_ORIGINS.indexOf(origin) > -1) return true;
+  return ALLOWED_ORIGIN_PATTERNS.some((re) => re.test(origin));
+}
+
+app.use((req, res, next) => {
+  const origin = req.get('origin');
+  if (originAllowed(origin)) {
+    res.set('Access-Control-Allow-Origin', origin);
+    res.set('Vary', 'Origin');
+    res.set('Access-Control-Allow-Methods', 'GET,POST,PATCH,OPTIONS');
+    res.set('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+    res.set('Access-Control-Max-Age', '86400');
+  }
+  if (req.method === 'OPTIONS') return res.status(204).end();
+  next();
+});
+
 /** Canonical acquisition stage order. Ids are portal-specific. */
 const STAGES = [
   { id: '472541000000081007', name: 'Not Notified', short: 'Not notified' },
