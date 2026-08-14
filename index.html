@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Parandur — Land &amp; Resettlement Control Room</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Bitter:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="app.css" />
+</head>
+<body>
+
+<!-- Sign-in gate -->
+<section id="gate" class="gate" hidden>
+  <div class="gate__panel">
+    <p class="eyebrow">Government of Tamil Nadu &middot; Revenue Administration</p>
+    <h1 class="gate__title">Land &amp; Resettlement<br />Control Room</h1>
+    <p class="gate__sub">Proposed greenfield airport, Parandur &middot; Kancheepuram district</p>
+
+    <div class="field">
+      <label for="u">Username</label>
+      <input id="u" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" />
+    </div>
+    <div class="field">
+      <label for="p">Password</label>
+      <input id="p" type="password" autocomplete="current-password" />
+    </div>
+    <button id="signin" class="btn btn--solid btn--block" type="button">Sign in</button>
+    <p id="login-error" class="login-error" hidden></p>
+
+    <p class="gate__demo">
+      Demo access &mdash; <span class="mono">collector</span> / <span class="mono">parandur2026</span>
+    </p>
+    <p class="gate__note">Modelled on the publicly reported project. A planning tool, not a position on the project.</p>
+  </div>
+</section>
+
+<main id="app" class="app" hidden>
+
+  <header class="masthead">
+    <div>
+      <p class="eyebrow">Kancheepuram district &middot; six revenue villages</p>
+      <h1 class="masthead__title">Parandur <span>Land &amp; Resettlement</span></h1>
+    </div>
+    <div class="masthead__right">
+      <span id="whoami" class="whoami"></span>
+      <button id="refresh" class="btn btn--ghost" type="button">Refresh</button>
+      <button id="signout" class="btn btn--ghost" type="button">Sign out</button>
+    </div>
+  </header>
+
+  <section id="banner" class="banner" hidden></section>
+
+  <!-- Acquisition burn-up -->
+  <section class="acquisition" aria-labelledby="acq-h">
+    <div class="acquisition__head">
+      <h2 id="acq-h" class="section-title">Land secured</h2>
+      <p id="acq-caption" class="section-caption"></p>
+    </div>
+    <div class="bar" role="img" aria-label="Acres secured against total required">
+      <div id="bar-gov" class="bar__seg bar__seg--gov"><span></span></div>
+      <div id="bar-priv" class="bar__seg bar__seg--priv"><span></span></div>
+    </div>
+    <ul class="legend">
+      <li><i class="swatch swatch--gov"></i>Government land <b id="v-gov">—</b></li>
+      <li><i class="swatch swatch--priv"></i>Private, possession taken <b id="v-priv">—</b></li>
+      <li><i class="swatch swatch--rem"></i>Still to secure <b id="v-rem">—</b></li>
+    </ul>
+  </section>
+
+  <!-- Signature: the survey sheet -->
+  <section class="sheet-wrap" aria-labelledby="sheet-h">
+    <div class="sheet-wrap__head">
+      <h2 id="sheet-h" class="section-title section-title--light">Acquisition register</h2>
+      <p class="section-caption section-caption--light">
+        Acres by village and stage. Figures in <span class="mono">acres</span>.
+        Cells redden as a parcel sits longer in one stage.
+      </p>
+    </div>
+    <div class="sheet" id="sheet"></div>
+    <ul class="agekey">
+      <li><i class="dot dot--fresh"></i>Under 30 days</li>
+      <li><i class="dot dot--warm"></i>30–60 days</li>
+      <li><i class="dot dot--hot"></i>Over 60 days</li>
+      <li><i class="dot dot--done"></i>Secured</li>
+    </ul>
+  </section>
+
+  <!-- The entitlement cascade -->
+  <section class="promise" aria-labelledby="promise-h">
+    <div class="promise__head">
+      <h2 id="promise-h" class="section-title">What the displaced were promised</h2>
+      <p id="promise-caption" class="section-caption"></p>
+    </div>
+    <div id="cascade" class="cascade"></div>
+    <p class="promise__foot">
+      Every household here was promised all five. The cascade is what has actually been delivered.
+    </p>
+  </section>
+
+  <!-- Blocked parcels -->
+  <section class="blocked" aria-labelledby="blocked-h">
+    <div class="blocked__head">
+      <h2 id="blocked-h" class="section-title">Blocked and ageing</h2>
+      <p class="section-caption">Parcels that cannot advance, longest-stuck first.</p>
+    </div>
+    <div id="blocked-list" class="blocked__list"></div>
+  </section>
+
+  <footer class="foot">
+    <span>Data source: Zoho Projects portal <span class="mono" id="foot-portal"></span></span>
+    <span id="foot-time"></span>
+  </footer>
+</main>
+
+<!-- Detail drawer -->
+<div id="scrim" class="scrim" hidden></div>
+<aside id="drawer" class="drawer" aria-live="polite" hidden>
+  <button id="drawer-close" class="drawer__close" type="button" aria-label="Close">&times;</button>
+  <div id="drawer-body" class="drawer__body"></div>
+</aside>
+
+<div id="toast" class="toast" hidden></div>
+
+<script src="app.js"></script>
+</body>
+</html>
