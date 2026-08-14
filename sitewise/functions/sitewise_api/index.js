@@ -43,29 +43,10 @@ const APP_USERS = [
 const SESSION_SECRET = process.env.APP_SESSION_SECRET || 'sitewise-dev-secret-change-me';
 const SESSION_HOURS = 12;
 
-// CORS — UI may be served from Slate/Catalyst; token travels in X-App-Token
-// because Catalyst reserves Authorization for its own OAuth.
-const ALLOWED_ORIGIN_PATTERNS = [
-  /^https:\/\/(?:[a-z0-9-]+\.)+onslate\.in$/i,
-  /^https:\/\/(?:[a-z0-9-]+\.)+catalystserverless\.in$/i,
-  /^https:\/\/(?:[a-z0-9-]+\.)+catalystserverless\.com$/i,
-  /^http:\/\/localhost(:\d+)?$/i,
-  /^http:\/\/127\.0\.0\.1(:\d+)?$/i
-];
-const EXTRA_ORIGINS = (process.env.APP_ALLOWED_ORIGINS || '').split(',').map((s) => s.trim()).filter(Boolean);
-function originAllowed(o) { return o ? (EXTRA_ORIGINS.indexOf(o) > -1 || ALLOWED_ORIGIN_PATTERNS.some((re) => re.test(o))) : false; }
-app.use((req, res, next) => {
-  const origin = req.get('origin');
-  if (originAllowed(origin)) {
-    res.set('Access-Control-Allow-Origin', origin);
-    res.set('Vary', 'Origin');
-    res.set('Access-Control-Allow-Methods', 'GET,POST,PATCH,OPTIONS');
-    res.set('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-App-Token');
-    res.set('Access-Control-Max-Age', '86400');
-  }
-  if (req.method === 'OPTIONS') return res.status(204).end();
-  next();
-});
+// CORS is handled by Catalyst's platform (add the UI origin under the project's
+// CORS domains). The function must NOT also set Access-Control-Allow-Origin, or
+// the browser sees a duplicated header and blocks the response. The session token
+// travels in X-App-Token because Catalyst reserves Authorization for its own OAuth.
 
 // ---------------------------------------------------------------- oauth
 let tokenCache = { value: null, expiresAt: 0 };
