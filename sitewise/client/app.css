@@ -137,6 +137,11 @@ button { font-family: inherit; cursor: pointer; }
 .crumbs b { color: var(--ink); font-weight: 600; }
 .crumbs .sep { opacity: .5; }
 .topbar__actions { display: flex; align-items: center; gap: 10px; }
+.whoami { font-size: 12.5px; color: var(--ink-3); margin-right: 2px; white-space: nowrap; }
+.jobsel { font-family: var(--font-body); font-size: 12.5px; font-weight: 600; padding: 5px 9px; border-radius: 7px;
+  border: 1px solid var(--border); background: var(--surface); color: var(--ink); cursor: pointer; }
+.jobsel:hover { border-color: var(--ink-3); }
+.jobsel:disabled { opacity: .5; }
 
 .iconbtn {
   width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--border);

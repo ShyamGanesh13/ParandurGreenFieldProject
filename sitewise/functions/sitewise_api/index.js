@@ -64,13 +64,22 @@ async function accessToken() {
   tokenCache = { value: json.access_token, expiresAt: now + ((json.expires_in || 3600) - 60) * 1000 };
   return tokenCache.value;
 }
-async function zoho(path, { retry = true } = {}) {
+async function zoho(path, { method = 'GET', body, retry = true } = {}) {
   const token = await accessToken();
-  const res = await fetch(`${PROJECTS_HOST}/api/v3/portal/${PORTAL_ID}${path}`, { headers: { Authorization: `Bearer ${token}` } });
-  if (res.status === 401 && retry) { tokenCache = { value: null, expiresAt: 0 }; return zoho(path, { retry: false }); }
+  const res = await fetch(`${PROJECTS_HOST}/api/v3/portal/${PORTAL_ID}${path}`, {
+    method,
+    headers: { Authorization: `Bearer ${token}`, ...(body ? { 'Content-Type': 'application/json' } : {}) },
+    ...(body ? { body: JSON.stringify(body) } : {})
+  });
+  if (res.status === 401 && retry) { tokenCache = { value: null, expiresAt: 0 }; return zoho(path, { method, body, retry: false }); }
   const text = await res.text();
   let json; try { json = text ? JSON.parse(text) : null; } catch { json = { raw: text }; }
-  if (!res.ok) { const err = new Error(`Zoho Projects rejected GET ${path}: ${json?.error?.title || res.status}`); err.status = res.status === 429 ? 429 : 502; err.upstream = json; throw err; }
+  if (!res.ok) {
+    const detail = json?.error?.details?.[0]?.message || json?.error?.title || res.status;
+    const err = new Error(`Zoho Projects rejected ${method} ${path}: ${detail}`);
+    err.status = res.status === 429 ? 429 : (res.status === 403 ? 403 : 502);
+    err.upstream = json; throw err;
+  }
   return json;
 }
 /** Records come back under data.result (or a few older shapes); normalise. */
@@ -90,7 +99,7 @@ function shapeProject(r) {
 }
 function shapeVendor(r) { return { name: r.name, category: r.category || '', outstanding: num(r.outstanding), rating: num(r.rating), terms: r.payment_terms || '' }; }
 function shapeMaterial(r) { return { name: r.name, unit: r.unit || '', onHand: num(r.on_hand), reorder: num(r.reorder_level), project: r.site || '' }; }
-function shapeJob(r) { return { title: r.name, project: r.project_name || '', crew: r.crew || '', due: r.site_job_cf_0001 || '', status: r.job_status || 'Open' }; }
+function shapeJob(r) { return { id: r.id, title: r.name, project: r.project_name || '', crew: r.crew || '', due: r.site_job_cf_0001 || '', status: r.job_status || 'Open' }; }
 
 // ---------------------------------------------------------------- session
 const b64 = (s) => Buffer.from(s, 'utf8').toString('base64url');
@@ -136,6 +145,17 @@ app.get(['/api/bootstrap', '/bootstrap'], requireAuth, async (_req, res, next) =
       materials: materials.map(shapeMaterial),
       jobs: jobs.map(shapeJob)
     });
+  } catch (e) { next(e); }
+});
+
+/** Write-back: advance or correct a job's status straight into Zoho Projects. */
+const JOB_STATUSES = ['Open', 'Overdue', 'Completed'];
+app.patch(['/api/jobs/:id/status', '/jobs/:id/status'], requireAuth, async (req, res, next) => {
+  try {
+    const { status } = req.body || {};
+    if (JOB_STATUSES.indexOf(status) < 0) return res.status(400).json({ error: 'Pick Open, Overdue, or Completed.' });
+    await zoho(`/module/site_job/entities/${req.params.id}`, { method: 'PATCH', body: { job_status: status } });
+    res.json({ ok: true, id: req.params.id, status });
   } catch (e) { next(e); }
 });
 

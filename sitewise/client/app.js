@@ -227,8 +227,12 @@
 
   V.jobs = function(){
     var rows=DB.jobs.list.map(function(j){
+      var statusCell = j.id
+        ? '<select class="jobsel" data-id="'+esc(j.id)+'" data-prev="'+esc(j.status)+'">'+
+            ['Open','Overdue','Completed'].map(function(s){ return '<option'+(s===j.status?' selected':'')+'>'+s+'</option>'; }).join('')+'</select>'
+        : statusPill(j.status);
       return '<tr><td class="cell-strong">'+esc(j.title)+'</td><td>'+esc(j.project)+'</td><td>'+esc(j.crew)+'</td>'+
-        '<td class="mono">'+esc(j.due)+'</td><td>'+statusPill(j.status)+'</td></tr>';
+        '<td class="mono">'+esc(j.due)+'</td><td>'+statusCell+'</td></tr>';
     }).join('');
     var seg=[{label:'Open',value:DB.jobs.open,color:'var(--blue)'},{label:'Overdue',value:DB.jobs.overdue,color:'var(--red)'},{label:'Completed',value:DB.jobs.completed,color:'var(--green)'}];
     return head('Jobs','Work items scheduled across all sites.')+
@@ -317,7 +321,9 @@
   // ------------------------------------------------------------ chrome render
   function renderSidebar(active){
     var html='<div class="brand"><div class="brand__mark">'+icon('ruler')+'</div><div class="brand__name">Site<b>wise</b></div></div>';
+    var role = state.user && state.user.role;
     NAV.forEach(function(g){
+      if (role === 'foreman' && (g.group === 'Finance' || g.group === 'Insights')) return; // foreman: no financials/reports
       html+='<div class="navgroup"><div class="navgroup__label">'+g.group+'</div>';
       g.items.forEach(function(it){
         var badge='';
@@ -344,6 +350,17 @@
     view.focus();
     window.scrollTo(0,0);
     animateBars(view);
+    if(id==='jobs'){
+      view.querySelectorAll('.jobsel').forEach(function(sel){
+        sel.addEventListener('change', function(){
+          var jid=sel.getAttribute('data-id'), prev=sel.getAttribute('data-prev'), val=sel.value;
+          sel.disabled=true;
+          api('/jobs/'+jid+'/status', { method:'PATCH', body: JSON.stringify({ status: val }) })
+            .then(function(){ toast('Job set to “'+val+'” in Zoho Projects.'); return loadData().then(function(){ route(); }); })
+            .catch(function(e){ toast(e.message || 'Could not update the job.'); sel.value=prev; sel.disabled=false; });
+        });
+      });
+    }
     if(id==='reports'){
       view.querySelectorAll('.tab').forEach(function(t){ t.addEventListener('click',function(){ reportTab=t.getAttribute('data-tab'); route(); }); });
       var c=$('#exp-csv'); if(c) c.addEventListener('click',exportCSV);
@@ -410,13 +427,26 @@
   var isLocal = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
   function token(){ try { return sessionStorage.getItem(TOKEN_KEY); } catch(e){ return state._t || null; } }
   function setToken(t){ state._t = t; try { t ? sessionStorage.setItem(TOKEN_KEY, t) : sessionStorage.removeItem(TOKEN_KEY); } catch(e){} }
+  function api(path, opts){
+    opts = opts || {};
+    var headers = opts.headers || {};
+    headers['X-App-Token'] = token() || '';
+    if (opts.body) headers['Content-Type'] = 'application/json';
+    return fetch(API + path, { method: opts.method || 'GET', headers: headers, body: opts.body })
+      .then(function(r){ return r.json().then(function(j){ if(!r.ok) throw new Error(j.error || 'Request failed'); return j; }); });
+  }
 
-  function showApp(){ $('#gate').hidden = true; $('#shell').hidden = false; window.__src = DATA_SOURCE; }
+  function showApp(){ $('#gate').hidden = true; $('#shell').hidden = false; window.__src = DATA_SOURCE;
+    var w = document.getElementById('whoami'); if (w && state.user) w.textContent = (state.user.name || state.user.username || '') + (state.user.role ? ' · ' + state.user.role : ''); }
   function showGate(msg){ $('#shell').hidden = true; $('#gate').hidden = false; var e=$('#login-error'); if(msg){ e.textContent=msg; e.hidden=false; } else { e.hidden=true; } setTimeout(function(){ var u=$('#u'); if(u) u.focus(); }, 40); }
 
   function enter(){
-    return loadData().then(function(){ showApp(); route(); })
-      .catch(function(e){ if (e && e.auth){ setToken(null); showGate('Your session expired. Sign in again.'); } });
+    return loadData().then(function(){
+      showApp();
+      // Role-based landing: the foreman works from Jobs, the manager from the portfolio dashboard.
+      if (state.user && state.user.role === 'foreman' && (!location.hash || location.hash === '#dashboard' || location.hash === '#')) { location.hash = '#jobs'; }
+      route();
+    }).catch(function(e){ if (e && e.auth){ setToken(null); showGate('Your session expired. Sign in again.'); } });
   }
 
   function signIn(){
