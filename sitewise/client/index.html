@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Sitewise — Construction Operations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="app.css" />
+</head>
+<body>
+  <section id="gate" class="gate" hidden>
+    <div class="gate__card">
+      <div class="gate__brand"><span class="gate__mark"></span><span class="gate__name">Site<b>wise</b></span></div>
+      <p class="gate__eyebrow">Construction Operations</p>
+      <h1 class="gate__title">Sign in to the control room</h1>
+      <div class="gate__field"><label for="u">Username</label><input id="u" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" /></div>
+      <div class="gate__field"><label for="p">Password</label><input id="p" type="password" autocomplete="current-password" /></div>
+      <button id="signin" class="btn btn--solid btn--block" type="button">Sign in</button>
+      <p id="login-error" class="gate__err" hidden></p>
+      <p class="gate__demo">Demo access — <span class="mono">manager</span> / <span class="mono">sitewise2026</span></p>
+    </div>
+  </section>
+  <div id="shell" class="shell" hidden>
+    <aside class="sidebar" id="sidebar"></aside>
+    <div class="main">
+      <header class="topbar">
+        <nav class="crumbs" id="crumbs"></nav>
+        <div class="topbar__actions">
+          <button id="theme" class="iconbtn" type="button" aria-label="Toggle theme" title="Toggle light / dark"></button>
+          <button id="signout" class="btn btn--ghost" type="button">Sign Out</button>
+        </div>
+      </header>
+      <main class="view" id="view" tabindex="-1"></main>
+    </div>
+  </div>
+  <div id="toast" class="toast" hidden></div>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -11,3 +11,5 @@ self_client.json
 HANDOFF*.md
 parandur-build-plan-*.md
 parandur-schema-and-mcp-prompt.md
+.catalystrc
+sitewise/SUBMISSION.md
