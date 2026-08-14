@@ -173,8 +173,8 @@
     var totalSpent=p.reduce(function(s,x){return s+x.spent;},0);
     var openJobs=DB.jobs.open, comp=DB.jobs.completed;
     var kpis=[
-      {k:'var(--blue)', label:'Total Projects', val:p.length, sub:DB.company.sites+' active sites'},
-      {k:'var(--accent)', label:'Under Contract', val:inr(totalBudget), sub:'portfolio value'},
+      {k:'var(--blue)', label:'Work Packages', val:p.length, sub:'across the airport site'},
+      {k:'var(--accent)', label:'Under Contract', val:inr(totalBudget), sub:'total package value'},
       {k:'var(--steel)', label:'Open Jobs', val:openJobs, sub:'across all sites'},
       {k:'var(--amber)', label:'Materials Low', val:DB.company.lowStock, sub:'need reordering', cls:'warn'},
       {k:'var(--red)', label:'Overdue Jobs', val:DB.jobs.overdue, sub:'past their due date', cls:DB.jobs.overdue?'bad':''},
@@ -191,9 +191,9 @@
     var finBars=[ {label:'Receivable', top:inr(DB.finance.receivable), segs:[{value:DB.finance.receivable,color:'var(--green)'}]},
       {label:'Payable', top:inr(DB.finance.payable), segs:[{value:DB.finance.payable,color:'var(--red)'}]} ];
 
-    return '<div class="page-head"><h1>Company Overview</h1><p>Good morning — here’s where every site stands today.</p></div>'+
+    return '<div class="page-head"><h1>Airport Build Overview</h1><p>Where the Parandur greenfield airport build stands today.</p></div>'+
       '<section class="hero"><div class="hero__eyebrow">Source · '+esc(window.__src||'sample data')+'</div>'+
-      '<h2>'+DB.projects.length+' active projects · '+inr(totalBudget)+' under contract</h2>'+
+      '<h2>'+DB.projects.length+' work packages · '+inr(totalBudget)+' under contract</h2>'+
       '<p class="hero__sub">'+DB.jobs.open+' jobs open · '+DB.company.lowStock+' materials need reordering · '+DB.jobs.overdue+' jobs overdue.</p>'+
       '<div class="hero__meta">'+
         '<div class="hero__stat"><b class="mono">'+inr(totalBudget)+'</b><span>Portfolio budget</span></div>'+
@@ -221,7 +221,7 @@
         '<td><div class="mini"><div class="mini__track"><div class="mini__fill" style="width:'+p.progress+'%"></div></div><span class="mini__pct">'+p.progress+'%</span></div></td>'+
         '<td class="num">'+inr(p.budget)+'</td><td class="num">'+inr(p.spent)+'</td><td>'+esc(p.mgr)+'</td></tr>';
     }).join('');
-    return head('Projects','Every active build across the portfolio, with budget burn and progress.')+
+    return head('Projects','Every airport work package, with budget burn and progress.')+
       card('<div class="tablewrap"><table class="data"><thead><tr><th>Project</th><th>Client</th><th>Status</th><th>Progress</th><th class="num">Budget</th><th class="num">Spent</th><th>Site Manager</th></tr></thead><tbody>'+rows+'</tbody></table></div>');
   };
 
@@ -320,7 +320,7 @@
 
   // ------------------------------------------------------------ chrome render
   function renderSidebar(active){
-    var html='<div class="brand"><div class="brand__mark">'+icon('ruler')+'</div><div class="brand__name">Site<b>wise</b></div></div>';
+    var html='<div class="brand"><div class="brand__mark">'+icon('ruler')+'</div><div class="brand__name">Parandur <b>AeroBuild</b></div></div>';
     var role = state.user && state.user.role;
     NAV.forEach(function(g){
       if (role === 'foreman' && (g.group === 'Finance' || g.group === 'Insights')) return; // foreman: no financials/reports
@@ -336,7 +336,7 @@
     $('#sidebar').innerHTML=html;
   }
   function renderCrumbs(active){
-    $('#crumbs').innerHTML='<span>Sitewise</span><span class="sep">/</span><b>'+esc(LABELS[active]||'Dashboard')+'</b>';
+    $('#crumbs').innerHTML='<span>Parandur AeroBuild</span><span class="sep">/</span><b>'+esc(LABELS[active]||'Dashboard')+'</b>';
   }
 
   // ------------------------------------------------------------ router
