@@ -94,7 +94,7 @@ app.use((req, res, next) => {
     res.set('Access-Control-Allow-Origin', origin);
     res.set('Vary', 'Origin');
     res.set('Access-Control-Allow-Methods', 'GET,POST,PATCH,OPTIONS');
-    res.set('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+    res.set('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-App-Token');
     res.set('Access-Control-Max-Age', '86400');
   }
   if (req.method === 'OPTIONS') return res.status(204).end();
@@ -310,8 +310,13 @@ function readToken(token) {
 }
 
 function requireAuth(req, res, next) {
-  const header = req.get('authorization') || '';
-  const token = header.replace(/^Bearer\s+/i, '');
+  // Catalyst intercepts the `Authorization` header and validates it as its own
+  // OAuth token before the request reaches this function, so our session token
+  // travels in a custom header. `Authorization` stays as a fallback for local
+  // dev, where there is no Catalyst layer in front.
+  const token =
+    req.get('x-app-token') ||
+    (req.get('authorization') || '').replace(/^Bearer\s+/i, '');
   const claims = readToken(token);
   if (!claims) {
     return res.status(401).json({ error: 'Your session has expired. Sign in again.' });

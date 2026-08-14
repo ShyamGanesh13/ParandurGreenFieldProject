@@ -33,7 +33,10 @@
   function api(path, opts) {
     opts = opts || {};
     var headers = opts.headers || {};
-    headers.Authorization = 'Bearer ' + (token() || '');
+    // Catalyst reserves the Authorization header for its own OAuth and rejects
+    // anything else with a 401 before it reaches the function, so the session
+    // token rides in a custom header instead.
+    headers['X-App-Token'] = token() || '';
     if (opts.body) headers['Content-Type'] = 'application/json';
     return fetch(API + path, { method: opts.method || 'GET', headers: headers, body: opts.body })
       .then(function (r) {

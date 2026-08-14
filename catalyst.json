@@ -1,8 +1,11 @@
 {
   "project_name": "ParandurAirportPlanner",
-  "project_id": 51859000000013054,
+  "project_id": 51859000000013060,
   "functions": {
-    "source": "functions"
+    "source": "functions",
+    "targets": [
+      "parandur_api"
+    ]
   },
   "client": {
     "source": "client"
