@@ -196,11 +196,16 @@
       return '<tr><td class="cell-strong">'+esc(j.title)+'</td><td>'+esc(j.project)+'</td><td>'+esc(j.crew)+'</td>'+
         '<td class="mono">'+esc(j.due)+'</td><td>'+statusCell+'</td></tr>';
     }).join('');
+    var total=DB.jobs.open+DB.jobs.overdue+DB.jobs.completed;
     var seg=[{label:'Open',value:DB.jobs.open,color:'var(--blue)'},{label:'Overdue',value:DB.jobs.overdue,color:'var(--red)'},{label:'Completed',value:DB.jobs.completed,color:'var(--green)'}];
+    var breakdown='<ul class="statlist">'+seg.map(function(s){
+      var pct=total?Math.round(s.value/total*100):0;
+      return '<li><i class="dot" style="background:'+s.color+'"></i><span>'+s.label+'</span><b class="mono">'+s.value+'</b><small>'+pct+'%</small></li>';
+    }).join('')+'</ul>';
     return head('Jobs','Work items scheduled across all sites.')+
-      '<div class="grid grid--2" style="margin-bottom:16px">'+
+      '<div class="split">'+
         card('<div class="tablewrap"><table class="data"><thead><tr><th>Job</th><th>Project</th><th>Crew</th><th>Due</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table></div>')+
-        '<div class="card"><div class="card__head"><h3>By status</h3></div><div class="card__body">'+donut(seg,(DB.jobs.open+DB.jobs.overdue+DB.jobs.completed),'jobs')+legend(seg)+'</div></div>'+
+        '<div class="card split__aside"><div class="card__head"><h3>By status</h3><span class="muted">'+total+' jobs</span></div><div class="card__body">'+donut(seg,total,'jobs')+breakdown+'</div></div>'+
       '</div>';
   };
 

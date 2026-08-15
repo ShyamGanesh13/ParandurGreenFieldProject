@@ -251,6 +251,17 @@ button { font-family: inherit; cursor: pointer; }
 .card__head .muted { font-size: 12px; color: var(--ink-3); }
 .card__body { padding: 18px; }
 
+/* table + compact side rail that hugs its content instead of stretching */
+.split { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 16px; align-items: start; }
+.split__aside { position: sticky; top: 78px; }
+@media (max-width: 1080px) { .split { grid-template-columns: 1fr; } .split__aside { position: static; } }
+.statlist { list-style: none; margin: 16px 0 0; padding: 0; }
+.statlist li { display: flex; align-items: center; gap: 10px; padding: 9px 2px; border-top: 1px solid var(--border-2); font-size: 13.5px; }
+.statlist li:first-child { border-top: 0; }
+.statlist li span { color: var(--ink-2); }
+.statlist li b { margin-left: auto; }
+.statlist li small { width: 40px; text-align: right; color: var(--ink-3); font-size: 12px; }
+
 /* ---------------------------------------------------------------- charts */
 .chart-legend { display: flex; flex-wrap: wrap; gap: 12px 16px; margin-top: 14px; }
 .chart-legend li { list-style: none; display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--ink-2); }
