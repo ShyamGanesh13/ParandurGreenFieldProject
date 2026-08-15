@@ -6,6 +6,7 @@
   var I = {
     grid:'M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z',
     plane:'M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z',
+    search:'M17 17l4 4M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16z',
     building:'M3 21h18M6 21V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v17M18 21V9a1 1 0 0 1 1-1h1M9 7h2M9 11h2M9 15h2',
     hammer:'M14 6l6 6M4 20l8-8M12 8l4-4 4 4-4 4M14 10l-9 9',
     clipboard:'M9 4h6a1 1 0 0 1 1 1v1H8V5a1 1 0 0 1 1-1zM8 6H6a1 1 0 0 0-1 1v13a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1h-2',
@@ -177,25 +178,30 @@
   };
 
   V.projects = function(){
+    var cols=[{label:'Package'},{label:'Client'},{label:'Status'},{label:'Progress'},{label:'Budget',num:true},{label:'Spent',num:true},{label:'Site Manager'}];
     var rows=DB.projects.map(function(p){
-      return '<tr><td><span class="cell-strong">'+esc(p.name)+'</span><span class="cell-sub">'+esc(p.code)+' · '+esc(p.site)+'</span></td>'+
-        '<td>'+esc(p.client)+'</td><td>'+statusPill(p.status)+'</td>'+
-        '<td><div class="mini"><div class="mini__track"><div class="mini__fill" style="width:'+p.progress+'%"></div></div><span class="mini__pct">'+p.progress+'%</span></div></td>'+
-        '<td class="num">'+inr(p.budget)+'</td><td class="num">'+inr(p.spent)+'</td><td>'+esc(p.mgr)+'</td></tr>';
-    }).join('');
-    return head('Projects','Every airport work package, with budget burn and progress.')+
-      card('<div class="tablewrap"><table class="data"><thead><tr><th>Project</th><th>Client</th><th>Status</th><th>Progress</th><th class="num">Budget</th><th class="num">Spent</th><th>Site Manager</th></tr></thead><tbody>'+rows+'</tbody></table></div>');
+      return { search:[p.name,p.code,p.site,p.client,p.mgr].join(' '), filter:p.status, cells:[
+        '<span class="cell-strong">'+esc(p.name)+'</span><span class="cell-sub">'+esc(p.code)+' · '+esc(p.site)+'</span>',
+        esc(p.client), statusPill(p.status),
+        '<div class="mini"><div class="mini__track"><div class="mini__fill" style="width:'+p.progress+'%"></div></div><span class="mini__pct">'+p.progress+'%</span></div>',
+        inr(p.budget), inr(p.spent), esc(p.mgr)
+      ] };
+    });
+    var filters=[{label:'On Track',val:'On Track'},{label:'At Risk',val:'At Risk'},{label:'Delayed',val:'Delayed'},{label:'Completed',val:'Completed'}];
+    return head('Projects','Every airport work package, with budget burn and progress.')+ftable(cols,rows,filters);
   };
 
   V.jobs = function(){
+    var cols=[{label:'Job'},{label:'Project'},{label:'Crew'},{label:'Due'},{label:'Status'}];
     var rows=DB.jobs.list.map(function(j){
       var statusCell = j.id
-        ? '<select class="jobsel" data-id="'+esc(j.id)+'" data-prev="'+esc(j.status)+'">'+
-            ['Open','Overdue','Completed'].map(function(s){ return '<option'+(s===j.status?' selected':'')+'>'+s+'</option>'; }).join('')+'</select>'
+        ? '<select class="jobsel" data-id="'+esc(j.id)+'" data-prev="'+esc(j.status)+'">'+['Open','Overdue','Completed'].map(function(s){ return '<option'+(s===j.status?' selected':'')+'>'+s+'</option>'; }).join('')+'</select>'
         : statusPill(j.status);
-      return '<tr><td class="cell-strong">'+esc(j.title)+'</td><td>'+esc(j.project)+'</td><td>'+esc(j.crew)+'</td>'+
-        '<td class="mono">'+esc(j.due)+'</td><td>'+statusCell+'</td></tr>';
-    }).join('');
+      return { search:[j.title,j.project,j.crew].join(' '), filter:j.status, cells:[
+        '<span class="cell-strong">'+esc(j.title)+'</span>', esc(j.project), esc(j.crew), '<span class="mono">'+esc(j.due)+'</span>', statusCell
+      ] };
+    });
+    var filters=[{label:'Open',val:'Open'},{label:'Overdue',val:'Overdue'},{label:'Completed',val:'Completed'}];
     var total=DB.jobs.open+DB.jobs.overdue+DB.jobs.completed;
     var seg=[{label:'Open',value:DB.jobs.open,color:'var(--blue)'},{label:'Overdue',value:DB.jobs.overdue,color:'var(--red)'},{label:'Completed',value:DB.jobs.completed,color:'var(--green)'}];
     var breakdown='<ul class="statlist">'+seg.map(function(s){
@@ -203,33 +209,35 @@
       return '<li><i class="dot" style="background:'+s.color+'"></i><span>'+s.label+'</span><b class="mono">'+s.value+'</b><small>'+pct+'%</small></li>';
     }).join('')+'</ul>';
     return head('Jobs','Work items scheduled across all sites.')+
-      '<div class="split">'+
-        card('<div class="tablewrap"><table class="data"><thead><tr><th>Job</th><th>Project</th><th>Crew</th><th>Due</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table></div>')+
+      '<div class="split">'+ftable(cols,rows,filters)+
         '<div class="card split__aside"><div class="card__head"><h3>By status</h3><span class="muted">'+total+' jobs</span></div><div class="card__body">'+donut(seg,total,'jobs')+breakdown+'</div></div>'+
       '</div>';
   };
 
   V.vendors = function(){
+    var cols=[{label:'Vendor'},{label:'Category'},{label:'Rating'},{label:'Terms'},{label:'Outstanding',num:true}];
     var rows=DB.vendors.map(function(v){
-      return '<tr><td class="cell-strong">'+esc(v.name)+'</td><td><span class="pill pill--gray">'+esc(v.category)+'</span></td>'+
-        '<td class="mono">★ '+v.rating.toFixed(1)+'</td><td>'+esc(v.terms)+'</td>'+
-        '<td class="num">'+(v.outstanding?inrFull(v.outstanding):'—')+'</td></tr>';
-    }).join('');
+      return { search:[v.name,v.category,v.terms].join(' '), filter:v.category, cells:[
+        '<span class="cell-strong">'+esc(v.name)+'</span>', '<span class="pill pill--gray">'+esc(v.category)+'</span>',
+        '<span class="mono">★ '+v.rating.toFixed(1)+'</span>', esc(v.terms), (v.outstanding?inrFull(v.outstanding):'—')
+      ] };
+    });
     var total=DB.vendors.reduce(function(s,v){return s+v.outstanding;},0);
-    return head('Vendors','Suppliers and subcontractors, with outstanding payables.')+
-      card('<div class="tablewrap"><table class="data"><thead><tr><th>Vendor</th><th>Category</th><th>Rating</th><th>Terms</th><th class="num">Outstanding</th></tr></thead><tbody>'+rows+
-        '<tr><td colspan="4" class="cell-strong">Total payable</td><td class="num cell-strong">'+inrFull(total)+'</td></tr></tbody></table></div>');
+    var foot='<tr><td colspan="4" class="cell-strong">Total payable</td><td class="num cell-strong">'+inrFull(total)+'</td></tr>';
+    var filters=[{label:'Materials',val:'Materials'},{label:'Equipment',val:'Equipment'},{label:'Labour',val:'Labour'},{label:'MEP',val:'MEP'}];
+    return head('Vendors','Suppliers and subcontractors, with outstanding payables.')+ftable(cols,rows,filters,foot);
   };
 
   V.expenses = function(){
     var list=DB.projects.slice().sort(function(a,b){return b.spent-a.spent;});
     var total=list.reduce(function(s,p){return s+p.spent;},0) || 1;
-    var rows=list.map(function(p){ return '<tr><td><span class="cell-strong">'+esc(p.name)+'</span><span class="cell-sub">'+esc(p.code)+'</span></td>'+
-      '<td class="num">'+inrFull(p.spent)+'</td><td class="num">'+inrFull(p.budget)+'</td></tr>'; }).join('');
+    var cols=[{label:'Package'},{label:'Spent (₹)',num:true},{label:'Budget (₹)',num:true}];
+    var rows=list.map(function(p){ return { search:[p.name,p.code].join(' '), cells:[
+      '<span class="cell-strong">'+esc(p.name)+'</span><span class="cell-sub">'+esc(p.code)+'</span>', inrFull(p.spent), inrFull(p.budget)
+    ] }; });
+    var foot='<tr><td class="cell-strong">Total spent</td><td class="num cell-strong">'+inrFull(total)+'</td><td></td></tr>';
     return head('Expenses','Spend to date on each airport work package.')+
-      '<div class="grid grid--2">'+
-        card('<div class="tablewrap"><table class="data"><thead><tr><th>Package</th><th class="num">Spent (₹)</th><th class="num">Budget (₹)</th></tr></thead><tbody>'+rows+
-          '<tr><td class="cell-strong">Total spent</td><td class="num cell-strong">'+inrFull(total)+'</td><td></td></tr></tbody></table></div>')+
+      '<div class="grid grid--2">'+ftable(cols,rows,null,foot)+
         '<div class="card"><div class="card__head"><h3>Share of spend</h3></div><div class="card__body">'+
           hbars(list.map(function(p){ return {label:p.name, sub:inr(p.spent), pct:Math.round(p.spent/total*100), color:'var(--accent)'}; }))+'</div></div>'+
       '</div>';
@@ -237,84 +245,98 @@
 
   // Reports with tabs + export
   V.materials = function(){
+    var cols=[{label:'Material'},{label:'Package'},{label:'On Hand',num:true},{label:'Reorder At',num:true},{label:'Status'}];
     var rows=DB.materials.map(function(m){
       var low=m.onHand<=m.reorder;
-      return '<tr><td class="cell-strong">'+esc(m.name)+'</td><td>'+esc(m.project)+'</td>'+
-        '<td class="num">'+esc(m.onHand)+' '+esc(m.unit)+'</td><td class="num">'+esc(m.reorder)+' '+esc(m.unit)+'</td>'+
-        '<td>'+(low?'<span class="pill pill--red">Low</span>':'<span class="pill pill--green">OK</span>')+'</td></tr>';
-    }).join('');
-    return head('Materials','Stock on hand against reorder levels, by package.')+
-      card('<div class="tablewrap"><table class="data"><thead><tr><th>Material</th><th>Package</th><th class="num">On Hand</th><th class="num">Reorder At</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table></div>');
+      return { search:[m.name,m.project].join(' '), filter:(low?'Low':'OK'), cells:[
+        '<span class="cell-strong">'+esc(m.name)+'</span>', esc(m.project),
+        esc(m.onHand)+' '+esc(m.unit), esc(m.reorder)+' '+esc(m.unit),
+        (low?'<span class="pill pill--red">Low</span>':'<span class="pill pill--green">OK</span>')
+      ] };
+    });
+    var filters=[{label:'Low stock',val:'Low'},{label:'OK',val:'OK'}];
+    return head('Materials','Stock on hand against reorder levels, by package.')+ftable(cols,rows,filters);
   };
 
   V.equipment = function(){
     var pillFor=function(a){ return a==='On Site'?'green':(a==='Maintenance'?'red':'amber'); };
+    var cols=[{label:'Asset'},{label:'Type'},{label:'Availability'},{label:'Location'},{label:'Operator'}];
     var rows=DB.equipment.map(function(e){
-      return '<tr><td class="cell-strong">'+esc(e.name)+'</td><td>'+esc(e.type)+'</td>'+
-        '<td><span class="pill pill--'+pillFor(e.availability)+'">'+esc(e.availability)+'</span></td>'+
-        '<td>'+esc(e.location)+'</td><td>'+esc(e.operator)+'</td></tr>';
-    }).join('');
-    return head('Equipment','Plant and machinery deployed across the airport site.')+
-      card('<div class="tablewrap"><table class="data"><thead><tr><th>Asset</th><th>Type</th><th>Availability</th><th>Location</th><th>Operator</th></tr></thead><tbody>'+rows+'</tbody></table></div>');
+      return { search:[e.name,e.type,e.location,e.operator].join(' '), filter:e.availability, cells:[
+        '<span class="cell-strong">'+esc(e.name)+'</span>', esc(e.type),
+        '<span class="pill pill--'+pillFor(e.availability)+'">'+esc(e.availability)+'</span>', esc(e.location), esc(e.operator)
+      ] };
+    });
+    var filters=[{label:'On Site',val:'On Site'},{label:'Idle',val:'Idle'},{label:'Maintenance',val:'Maintenance'}];
+    return head('Equipment','Plant and machinery deployed across the airport site.')+ftable(cols,rows,filters);
   };
 
   V.labour = function(){
     var totH=DB.crews.reduce(function(s,c){return s+c.headcount;},0);
     var totP=DB.crews.reduce(function(s,c){return s+c.present;},0);
+    var cols=[{label:'Crew'},{label:'Trade'},{label:'Package'},{label:'Headcount',num:true},{label:'Present',num:true},{label:'Attendance'}];
     var rows=DB.crews.map(function(c){
       var pct=c.headcount?Math.round(c.present/c.headcount*100):0;
-      return '<tr><td class="cell-strong">'+esc(c.name)+'</td><td>'+esc(c.trade)+'</td><td>'+esc(c.package)+'</td>'+
-        '<td class="num">'+c.headcount+'</td><td class="num">'+c.present+'</td>'+
-        '<td><div class="mini"><div class="mini__track"><div class="mini__fill" style="width:'+pct+'%"></div></div><span class="mini__pct">'+pct+'%</span></div></td></tr>';
-    }).join('');
+      return { search:[c.name,c.trade,c.package].join(' '), cells:[
+        '<span class="cell-strong">'+esc(c.name)+'</span>', esc(c.trade), esc(c.package), String(c.headcount), String(c.present),
+        '<div class="mini"><div class="mini__track"><div class="mini__fill" style="width:'+pct+'%"></div></div><span class="mini__pct">'+pct+'%</span></div>'
+      ] };
+    });
     return head('Labour & Attendance','Crews on site today — headcount and attendance by package.')+
       '<div class="kpis" style="grid-template-columns:repeat(3,1fr)">'+
         '<div class="kpi" style="--k:var(--blue)"><div class="kpi__label">Crews</div><div class="kpi__val">'+DB.crews.length+'</div><div class="kpi__sub">on the airport site</div></div>'+
         '<div class="kpi" style="--k:var(--steel)"><div class="kpi__label">On the books</div><div class="kpi__val">'+totH+'</div><div class="kpi__sub">total headcount</div></div>'+
         '<div class="kpi" style="--k:var(--green)"><div class="kpi__label">Present today</div><div class="kpi__val">'+totP+'</div><div class="kpi__sub">'+(totH?Math.round(totP/totH*100):0)+'% attendance</div></div>'+
-      '</div>'+
-      card('<div class="tablewrap"><table class="data"><thead><tr><th>Crew</th><th>Trade</th><th>Package</th><th class="num">Headcount</th><th class="num">Present</th><th>Attendance</th></tr></thead><tbody>'+rows+'</tbody></table></div>');
+      '</div>'+ftable(cols,rows,null);
   };
 
   V.purchase = function(){
     var pillFor=function(s){ return {Requested:'amber',Approved:'blue',Ordered:'blue',Delivered:'green'}[s]||'gray'; };
+    var cols=[{label:'Request'},{label:'Package'},{label:'Quantity'},{label:'Vendor'},{label:'Status'},{label:'Value (₹)',num:true}];
     var rows=DB.purchases.map(function(p){
-      return '<tr><td class="cell-strong">'+esc(p.name)+'</td><td>'+esc(p.package)+'</td><td>'+esc(p.quantity)+'</td>'+
-        '<td>'+esc(p.vendor)+'</td><td><span class="pill pill--'+pillFor(p.status)+'">'+esc(p.status)+'</span></td>'+
-        '<td class="num">'+inrFull(p.value)+'</td></tr>';
-    }).join('');
+      return { search:[p.name,p.package,p.vendor].join(' '), filter:p.status, cells:[
+        '<span class="cell-strong">'+esc(p.name)+'</span>', esc(p.package), esc(p.quantity), esc(p.vendor),
+        '<span class="pill pill--'+pillFor(p.status)+'">'+esc(p.status)+'</span>', inrFull(p.value)
+      ] };
+    });
     var total=DB.purchases.reduce(function(s,p){return s+p.value;},0);
-    return head('Purchase Requests','Material and hire requests raised against packages.')+
-      card('<div class="tablewrap"><table class="data"><thead><tr><th>Request</th><th>Package</th><th>Quantity</th><th>Vendor</th><th>Status</th><th class="num">Value (₹)</th></tr></thead><tbody>'+rows+
-        '<tr><td class="cell-strong" colspan="5">Total requested</td><td class="num cell-strong">'+inrFull(total)+'</td></tr></tbody></table></div>');
+    var foot='<tr><td class="cell-strong" colspan="5">Total requested</td><td class="num cell-strong">'+inrFull(total)+'</td></tr>';
+    var filters=[{label:'Requested',val:'Requested'},{label:'Approved',val:'Approved'},{label:'Ordered',val:'Ordered'},{label:'Delivered',val:'Delivered'}];
+    return head('Purchase Requests','Material and hire requests raised against packages.')+ftable(cols,rows,filters,foot);
   };
 
   V.billing = function(){
     var pillFor=function(s){ return {Submitted:'amber',Certified:'blue',Paid:'green'}[s]||'gray'; };
+    var cols=[{label:'Bill'},{label:'Package'},{label:'Client'},{label:'Amount (₹)',num:true},{label:'Status'}];
     var rows=DB.bills.map(function(b){
-      return '<tr><td class="cell-strong">'+esc(b.name)+'</td><td>'+esc(b.package)+'</td><td>'+esc(b.client)+'</td>'+
-        '<td class="num">'+inrFull(b.amount)+'</td><td><span class="pill pill--'+pillFor(b.status)+'">'+esc(b.status)+'</span></td></tr>';
-    }).join('');
+      return { search:[b.name,b.package,b.client].join(' '), filter:b.status, cells:[
+        '<span class="cell-strong">'+esc(b.name)+'</span>', esc(b.package), esc(b.client), inrFull(b.amount),
+        '<span class="pill pill--'+pillFor(b.status)+'">'+esc(b.status)+'</span>'
+      ] };
+    });
     var total=DB.bills.reduce(function(s,b){return s+b.amount;},0);
     var paid=DB.bills.filter(function(b){return b.status==='Paid';}).reduce(function(s,b){return s+b.amount;},0);
+    var filters=[{label:'Submitted',val:'Submitted'},{label:'Certified',val:'Certified'},{label:'Paid',val:'Paid'}];
     return head('Client Billing','Running-account bills raised to the airport authorities.')+
       '<div class="kpis" style="grid-template-columns:repeat(3,1fr)">'+
         '<div class="kpi" style="--k:var(--accent)"><div class="kpi__label">Billed to date</div><div class="kpi__val">'+inr(total)+'</div><div class="kpi__sub">across all packages</div></div>'+
         '<div class="kpi" style="--k:var(--green)"><div class="kpi__label">Received</div><div class="kpi__val">'+inr(paid)+'</div><div class="kpi__sub">bills marked paid</div></div>'+
         '<div class="kpi" style="--k:var(--amber)"><div class="kpi__label">Outstanding</div><div class="kpi__val">'+inr(total-paid)+'</div><div class="kpi__sub">submitted or certified</div></div>'+
-      '</div>'+
-      card('<div class="tablewrap"><table class="data"><thead><tr><th>Bill</th><th>Package</th><th>Client</th><th class="num">Amount (₹)</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table></div>');
+      '</div>'+ftable(cols,rows,filters);
   };
 
   function inspectionView(kind){
     var pillFor=function(r){ return {Pass:'green',Fail:'red',Open:'amber'}[r]||'gray'; };
     var list=DB.inspections.filter(function(i){return i.type===kind;});
+    var cols=[{label:'Inspection'},{label:'Package'},{label:'Result'},{label:'Inspector'}];
     var rows=list.map(function(i){
-      return '<tr><td class="cell-strong">'+esc(i.name)+'</td><td>'+esc(i.package)+'</td>'+
-        '<td><span class="pill pill--'+pillFor(i.result)+'">'+esc(i.result)+'</span></td><td>'+esc(i.inspector)+'</td></tr>';
-    }).join('');
-    return head(kind, kind+' inspections logged across the airport packages.')+
-      card('<div class="tablewrap"><table class="data"><thead><tr><th>Inspection</th><th>Package</th><th>Result</th><th>Inspector</th></tr></thead><tbody>'+rows+'</tbody></table></div>');
+      return { search:[i.name,i.package,i.inspector].join(' '), filter:i.result, cells:[
+        '<span class="cell-strong">'+esc(i.name)+'</span>', esc(i.package),
+        '<span class="pill pill--'+pillFor(i.result)+'">'+esc(i.result)+'</span>', esc(i.inspector)
+      ] };
+    });
+    var filters=[{label:'Pass',val:'Pass'},{label:'Open',val:'Open'},{label:'Fail',val:'Fail'}];
+    return head(kind, kind+' inspections logged across the airport packages.')+ftable(cols,rows,filters);
   }
   V.quality = function(){ return inspectionView('Quality'); };
   V.safety = function(){ return inspectionView('Safety'); };
@@ -361,6 +383,49 @@
   function head(t,s){ return '<div class="page-head"><div class="page-head__row"><div><h1>'+esc(t)+'</h1><p>'+esc(s)+'</p></div></div></div>'; }
   function card(inner){ return '<div class="card">'+inner+'</div>'; }
 
+  // ------------------------------------------------------------ filterable tables
+  function toolbar(filters){
+    var chips = filters && filters.length
+      ? '<div class="chips">'+[{label:'All',val:''}].concat(filters).map(function(f){ return '<button class="chip'+(f.val===''?' is-active':'')+'" data-val="'+esc(f.val)+'">'+esc(f.label)+'</button>'; }).join('')+'</div>'
+      : '';
+    return '<div class="tbl-toolbar"><label class="tbl-search">'+icon('search')+'<input type="search" placeholder="Search…" aria-label="Search this table"></label>'+chips+'<span class="tbl-count"></span></div>';
+  }
+  /** A filterable table card. cols:[{label,num?}], rows:[{cells:[html], search, filter}], filters?, foot?html */
+  function ftable(cols, rows, filters, foot){
+    var thead='<tr>'+cols.map(function(c){ return '<th'+(c.num?' class="num"':'')+'>'+esc(c.label)+'</th>'; }).join('')+'</tr>';
+    var body=rows.map(function(r){
+      return '<tr data-search="'+esc(String(r.search||'').toLowerCase())+'" data-filter="'+esc(r.filter==null?'':r.filter)+'">'+
+        r.cells.map(function(cell,i){ return '<td'+(cols[i]&&cols[i].num?' class="num"':'')+'>'+cell+'</td>'; }).join('')+'</tr>';
+    }).join('');
+    return '<div class="card filterable" data-cols="'+cols.length+'">'+toolbar(filters)+
+      '<div class="tablewrap"><table class="data"><thead>'+thead+'</thead><tbody>'+body+'</tbody>'+(foot?'<tfoot>'+foot+'</tfoot>':'')+'</table></div></div>';
+  }
+  function wireFilters(root){
+    Array.prototype.forEach.call(root.querySelectorAll('.filterable'), function(dv){
+      var input=dv.querySelector('.tbl-search input');
+      var chips=Array.prototype.slice.call(dv.querySelectorAll('.chip'));
+      var rows=Array.prototype.slice.call(dv.querySelectorAll('tbody tr'));
+      var count=dv.querySelector('.tbl-count');
+      var cols=parseInt(dv.getAttribute('data-cols'),10)||1;
+      var tbody=dv.querySelector('tbody');
+      var q='', f='', emptyRow=null;
+      function apply(){
+        var shown=0;
+        rows.forEach(function(tr){
+          var okQ=!q || (tr.getAttribute('data-search')||'').indexOf(q)>-1;
+          var okF=!f || (tr.getAttribute('data-filter')||'')===f;
+          var show=okQ&&okF; tr.style.display=show?'':'none'; if(show) shown++;
+        });
+        if(count) count.textContent=shown+' of '+rows.length;
+        if(!shown){ if(!emptyRow){ emptyRow=document.createElement('tr'); emptyRow.className='is-empty-row'; emptyRow.innerHTML='<td colspan="'+cols+'" class="tbl-empty">No matching records.</td>'; tbody.appendChild(emptyRow); } }
+        else if(emptyRow){ emptyRow.remove(); emptyRow=null; }
+      }
+      if(input) input.addEventListener('input', function(){ q=input.value.trim().toLowerCase(); apply(); });
+      chips.forEach(function(c){ c.addEventListener('click', function(){ chips.forEach(function(x){x.classList.remove('is-active');}); c.classList.add('is-active'); f=c.getAttribute('data-val'); apply(); }); });
+      apply();
+    });
+  }
+
   // ------------------------------------------------------------ export
   function exportCSV(){
     var r=reportSet()[reportTab];
@@ -403,6 +468,7 @@
     view.focus();
     window.scrollTo(0,0);
     animateBars(view);
+    wireFilters(view);
     if(id==='jobs'){
       view.querySelectorAll('.jobsel').forEach(function(sel){
         sel.addEventListener('change', function(){
