@@ -5,6 +5,7 @@
   // ------------------------------------------------------------ icons (Lucide-style)
   var I = {
     grid:'M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z',
+    plane:'M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z',
     building:'M3 21h18M6 21V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v17M18 21V9a1 1 0 0 1 1-1h1M9 7h2M9 11h2M9 15h2',
     hammer:'M14 6l6 6M4 20l8-8M12 8l4-4 4 4-4 4M14 10l-9 9',
     clipboard:'M9 4h6a1 1 0 0 1 1 1v1H8V5a1 1 0 0 1 1-1zM8 6H6a1 1 0 0 0-1 1v13a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1h-2',
@@ -367,7 +368,7 @@
 
   // ------------------------------------------------------------ chrome render
   function renderSidebar(active){
-    var html='<div class="brand"><div class="brand__mark">'+icon('ruler')+'</div><div class="brand__name">Parandur <b>AeroBuild</b></div></div>';
+    var html='<div class="brand"><div class="brand__mark">'+icon('plane')+'</div><div class="brand__name">Parandur <b>AeroBuild</b></div></div>';
     var role = state.user && state.user.role;
     NAV.forEach(function(g){
       if (role === 'foreman' && (g.group === 'Finance' || g.group === 'Insights')) return; // foreman: no financials/reports
