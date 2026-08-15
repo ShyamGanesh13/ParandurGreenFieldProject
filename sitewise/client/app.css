@@ -132,11 +132,9 @@ button { font-family: inherit; cursor: pointer; }
   background-color: var(--bg);
   background-image:
     radial-gradient(1200px 600px at 94% -10%, color-mix(in srgb, var(--accent) 26%, transparent), transparent 56%),
-    radial-gradient(950px 540px at 3% 110%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 60%),
-    linear-gradient(var(--grid-line) 1px, transparent 1px),
-    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
-  background-size: auto, auto, 34px 34px, 34px 34px;
-  background-repeat: no-repeat, no-repeat, repeat, repeat;
+    radial-gradient(950px 540px at 3% 110%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 60%);
+  background-size: auto, auto;
+  background-repeat: no-repeat, no-repeat;
   background-attachment: fixed;
 }
 /* dimmed plane climbing across every screen — masked so it is theme-aware (visible in light + dark) */
@@ -202,10 +200,6 @@ button { font-family: inherit; cursor: pointer; }
   position: relative; overflow: hidden; border-radius: var(--radius);
   border: 1px solid var(--border); background: var(--elevated);
   padding: 26px 28px; margin-bottom: 20px;
-  background-image:
-    linear-gradient(var(--blueprint) 1px, transparent 1px),
-    linear-gradient(90deg, var(--blueprint) 1px, transparent 1px);
-  background-size: 26px 26px;
 }
 .hero::after {
   content: ""; position: absolute; right: -40px; top: -60px; width: 300px; height: 300px;
@@ -349,11 +343,9 @@ table.data tbody tr:hover { background: var(--border-2); }
   background-color: var(--bg);
   background-image:
     radial-gradient(1200px 640px at 80% -18%, color-mix(in srgb, var(--accent) 30%, transparent), transparent 56%),
-    linear-gradient(180deg, color-mix(in srgb, var(--accent) 12%, var(--bg)), transparent 46%),
-    linear-gradient(var(--grid-line) 1px, transparent 1px),
-    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
-  background-size: auto, auto, 32px 32px, 32px 32px;
-  background-repeat: no-repeat, no-repeat, repeat, repeat;
+    linear-gradient(180deg, color-mix(in srgb, var(--accent) 12%, var(--bg)), transparent 46%);
+  background-size: auto, auto;
+  background-repeat: no-repeat, no-repeat;
 }
 .gate[hidden] { display: none; }
 /* a plane climbing out, dimmed into the wallpaper (masked = theme-aware) */
