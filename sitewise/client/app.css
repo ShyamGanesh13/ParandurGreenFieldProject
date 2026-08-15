@@ -413,6 +413,30 @@ table.data tbody tr:hover { background: var(--border-2); }
 .drawer__actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 22px; }
 .form-err { color: var(--red); font-size: 13px; margin: 12px 0 0; }
 
+/* calendar date picker */
+.datepick { position: relative; }
+.datepick__input { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--ink);
+  font-family: var(--font-body); font-size: 14px; text-align: left; }
+.datepick__input:hover { border-color: var(--ink-3); }
+.datepick__input svg { width: 16px; height: 16px; color: var(--ink-3); flex: none; }
+.datepick__val.is-ph { color: var(--ink-3); }
+.datepick__pop { position: absolute; z-index: 5; top: calc(100% + 6px); left: 0; width: 270px; max-width: 100%;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow-lg); padding: 12px; }
+.datepick__pop[hidden] { display: none; }
+.datepick__hd { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.datepick__hd b { font-family: var(--font-display); font-size: 14px; }
+.datepick__nav { width: 28px; height: 28px; border: 1px solid var(--border); background: var(--bg); color: var(--ink-2); border-radius: 7px; font-size: 16px; line-height: 1; }
+.datepick__nav:hover { color: var(--ink); border-color: var(--ink-3); }
+.datepick__wd { display: grid; grid-template-columns: repeat(7,1fr); gap: 2px; margin-bottom: 4px; }
+.datepick__wd span { text-align: center; font-size: 10.5px; font-weight: 600; color: var(--ink-3); text-transform: uppercase; letter-spacing: .04em; padding: 4px 0; }
+.datepick__grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 2px; }
+.datepick__grid > span { height: 34px; }
+.datepick__day { height: 34px; border: 0; background: transparent; color: var(--ink); border-radius: 8px; font-family: var(--font-mono); font-size: 13px; }
+.datepick__day:hover { background: var(--border-2); }
+.datepick__day.is-today { box-shadow: inset 0 0 0 1px var(--ink-3); }
+.datepick__day.is-sel { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
+
 /* toast */
 .toast {
   position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%);

@@ -8,6 +8,7 @@
     plane:'M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z',
     search:'M17 17l4 4M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16z',
     plus:'M12 5v14M5 12h14',
+    calendar:'M8 2v4M16 2v4M3 9h18M5 4h14a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z',
     building:'M3 21h18M6 21V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v17M18 21V9a1 1 0 0 1 1-1h1M9 7h2M9 11h2M9 15h2',
     hammer:'M14 6l6 6M4 20l8-8M12 8l4-4 4 4-4 4M14 10l-9 9',
     clipboard:'M9 4h6a1 1 0 0 1 1 1v1H8V5a1 1 0 0 1 1-1zM8 6H6a1 1 0 0 0-1 1v13a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1h-2',
@@ -443,6 +444,49 @@
   function canCreate(kind){ var f=FORMS[kind]; if(!f) return false; if(f.role && (!state.user || state.user.role!==f.role)) return false; return true; }
   function newBtn(kind,label,prefill){ return canCreate(kind) ? '<button class="btn btn--solid" data-new="'+kind+'"'+(prefill?' data-prefill="'+esc(JSON.stringify(prefill))+'"':'')+'>'+icon('plus')+esc(label)+'</button>' : ''; }
 
+  // Self-contained calendar date picker (no native input, no library)
+  function pad2(n){ return (n<10?'0':'')+n; }
+  function fmtDate(iso){ if(!iso) return ''; var d=new Date(iso+'T00:00:00'); if(isNaN(d)) return ''; return d.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}); }
+  function dpWidget(name, value){
+    return '<div class="datepick" data-dp>'+
+      '<button type="button" class="datepick__input"><span class="datepick__val'+(value?'':' is-ph')+'">'+(value?esc(fmtDate(value)):'Select a date')+'</span>'+icon('calendar')+'</button>'+
+      '<input type="hidden" name="'+esc(name)+'" value="'+esc(value||'')+'">'+
+      '<div class="datepick__pop" hidden></div></div>';
+  }
+  function renderCal(pop, y, m, selISO){
+    var first=new Date(y,m,1), startDay=first.getDay(), days=new Date(y,m+1,0).getDate();
+    var monthName=first.toLocaleDateString('en-IN',{month:'long',year:'numeric'});
+    var t=new Date(), todayISO=t.getFullYear()+'-'+pad2(t.getMonth()+1)+'-'+pad2(t.getDate());
+    var cells='';
+    for(var i=0;i<startDay;i++) cells+='<span></span>';
+    for(var d=1;d<=days;d++){
+      var iso=y+'-'+pad2(m+1)+'-'+pad2(d);
+      cells+='<button type="button" class="datepick__day'+(iso===selISO?' is-sel':'')+(iso===todayISO?' is-today':'')+'" data-iso="'+iso+'">'+d+'</button>';
+    }
+    pop.innerHTML='<div class="datepick__hd"><button type="button" class="datepick__nav" data-nav="-1" aria-label="Previous month">‹</button><b>'+esc(monthName)+'</b><button type="button" class="datepick__nav" data-nav="1" aria-label="Next month">›</button></div>'+
+      '<div class="datepick__wd"><span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span></div>'+
+      '<div class="datepick__grid">'+cells+'</div>';
+    pop.setAttribute('data-y',y); pop.setAttribute('data-m',m);
+  }
+  function wireDatePickers(root){
+    var pickers=Array.prototype.slice.call(root.querySelectorAll('[data-dp]'));
+    var closeAll=function(){ pickers.forEach(function(o){ o.querySelector('.datepick__pop').hidden=true; }); };
+    pickers.forEach(function(dp){
+      var btn=dp.querySelector('.datepick__input'), hidden=dp.querySelector('input[type=hidden]'), pop=dp.querySelector('.datepick__pop'), valEl=dp.querySelector('.datepick__val');
+      btn.addEventListener('click', function(e){ e.stopPropagation();
+        if(pop.hidden){ closeAll(); var sel=hidden.value, base=sel?new Date(sel+'T00:00:00'):new Date(); renderCal(pop, base.getFullYear(), base.getMonth(), sel); pop.hidden=false; }
+        else pop.hidden=true;
+      });
+      pop.addEventListener('click', function(e){ e.stopPropagation();
+        var nav=e.target.closest('.datepick__nav');
+        if(nav){ var y=+pop.getAttribute('data-y'), m=+pop.getAttribute('data-m'); m+=+nav.getAttribute('data-nav'); if(m<0){m=11;y--;} if(m>11){m=0;y++;} renderCal(pop,y,m,hidden.value); return; }
+        var day=e.target.closest('.datepick__day');
+        if(day){ var iso=day.getAttribute('data-iso'); hidden.value=iso; valEl.textContent=fmtDate(iso); valEl.classList.remove('is-ph'); pop.hidden=true; }
+      });
+    });
+    if(pickers.length) root.addEventListener('click', function(e){ if(!e.target.closest('[data-dp]')) closeAll(); });
+  }
+
   function openForm(kind, prefill){
     var f=FORMS[kind]; if(!f || !canCreate(kind)) return;
     prefill=prefill||{};
@@ -452,6 +496,8 @@
       var input;
       if(fl.type==='select'){
         input='<select name="'+fl.name+'">'+fl.options.map(function(o){ return '<option'+(String(o)===String(v)?' selected':'')+'>'+esc(o)+'</option>'; }).join('')+'</select>';
+      } else if(fl.type==='date'){
+        input=dpWidget(fl.name, v);
       } else {
         input='<input name="'+fl.name+'" type="'+fl.type+'" '+(fl.required?'required ':'')+(fl.placeholder?'placeholder="'+esc(fl.placeholder)+'" ':'')+'value="'+esc(v)+'" />';
       }
@@ -466,6 +512,7 @@
     var firstInput=form.querySelector('input,select'); if(firstInput) setTimeout(function(){ firstInput.focus(); },40);
     $('#drawer-body').querySelector('.drawer__close').addEventListener('click', closeDrawer);
     form.querySelector('[data-cancel]').addEventListener('click', closeDrawer);
+    wireDatePickers(form);
     form.addEventListener('submit', function(ev){
       ev.preventDefault();
       var vals={}; fields.forEach(function(fl){ var el=form.querySelector('[name="'+fl.name+'"]'); vals[fl.name]=el?el.value:''; });
