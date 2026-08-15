@@ -100,6 +100,11 @@ function shapeProject(r) {
 function shapeVendor(r) { return { name: r.name, category: r.category || '', outstanding: num(r.outstanding), rating: num(r.rating), terms: r.payment_terms || '' }; }
 function shapeMaterial(r) { return { name: r.name, unit: r.unit || '', onHand: num(r.on_hand), reorder: num(r.reorder_level), project: r.site || '' }; }
 function shapeJob(r) { return { id: r.id, title: r.name, project: r.project_name || '', crew: r.crew || '', due: r.site_job_cf_0001 || '', status: r.job_status || 'Open' }; }
+function shapeEquipment(r) { return { name: r.name, type: r.machine_type || '', availability: r.availability || '', location: r.location || '', operator: r.operator || '' }; }
+function shapeCrew(r) { return { name: r.name, trade: r.trade || '', headcount: num(r.headcount), present: num(r.present_today), package: r.package || '' }; }
+function shapePR(r) { return { name: r.name, package: r.package || '', quantity: r.quantity || '', vendor: r.vendor || '', status: r.request_status || '', value: num(r.order_value) }; }
+function shapeBill(r) { return { name: r.name, package: r.package || '', client: r.client || '', amount: num(r.bill_amount), status: r.client_bill_cf_0001 || '' }; }
+function shapeInspection(r) { return { name: r.name, type: r.inspection_type || '', package: r.package || '', result: r.result || '', inspector: r.inspector || '' }; }
 
 // ---------------------------------------------------------------- session
 const b64 = (s) => Buffer.from(s, 'utf8').toString('base64url');
@@ -134,8 +139,10 @@ app.get(['/api/session', '/session'], requireAuth, (req, res) => res.json({ user
 
 app.get(['/api/bootstrap', '/bootstrap'], requireAuth, async (_req, res, next) => {
   try {
-    const [projects, vendors, materials, jobs] = await Promise.all([
-      listRecords('building_project'), listRecords('vendor'), listRecords('material'), listRecords('site_job')
+    const [projects, vendors, materials, jobs, equipment, crews, purchases, bills, inspections] = await Promise.all([
+      listRecords('building_project'), listRecords('vendor'), listRecords('material'), listRecords('site_job'),
+      listRecords('equipment'), listRecords('labour_crew'), listRecords('purchase_request'),
+      listRecords('client_bill'), listRecords('site_inspection')
     ]);
     res.json({
       source: 'Zoho Projects (live)',
@@ -143,7 +150,12 @@ app.get(['/api/bootstrap', '/bootstrap'], requireAuth, async (_req, res, next) =
       projects: projects.map(shapeProject),
       vendors: vendors.map(shapeVendor),
       materials: materials.map(shapeMaterial),
-      jobs: jobs.map(shapeJob)
+      jobs: jobs.map(shapeJob),
+      equipment: equipment.map(shapeEquipment),
+      crews: crews.map(shapeCrew),
+      purchases: purchases.map(shapePR),
+      bills: bills.map(shapeBill),
+      inspections: inspections.map(shapeInspection)
     });
   } catch (e) { next(e); }
 });

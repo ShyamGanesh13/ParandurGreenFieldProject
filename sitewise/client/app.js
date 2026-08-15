@@ -38,28 +38,20 @@
     { group:'Operations', items:[
       {id:'projects', label:'Projects', icon:'building'},
       {id:'jobs', label:'Jobs', icon:'hammer'},
-      {id:'daily-report', label:'Daily Site Report', icon:'clipboard'},
-      {id:'labour', label:'Labour & Attendance', icon:'users'},
-      {id:'timesheets', label:'Timesheets', icon:'clock'} ] },
+      {id:'labour', label:'Labour & Attendance', icon:'users'} ] },
     { group:'Inventory', items:[
       {id:'materials', label:'Materials', icon:'box'},
-      {id:'site-stock', label:'Site Stock', icon:'layers'},
       {id:'purchase', label:'Purchase Requests', icon:'cart'},
       {id:'equipment', label:'Equipment', icon:'truck'} ] },
     { group:'Finance', items:[
       {id:'vendors', label:'Vendors', icon:'handshake'},
       {id:'billing', label:'Client Billing', icon:'receipt'},
       {id:'expenses', label:'Expenses', icon:'wallet'} ] },
-    { group:'Documents', items:[
-      {id:'drawings', label:'Drawings', icon:'ruler'},
-      {id:'photos', label:'Photos', icon:'image'} ] },
     { group:'Compliance', items:[
       {id:'quality', label:'Quality', icon:'shield'},
-      {id:'safety', label:'Safety', icon:'hardhat'},
-      {id:'approvals', label:'Approvals', icon:'check'} ] },
+      {id:'safety', label:'Safety', icon:'hardhat'} ] },
     { group:'Insights', items:[
-      {id:'reports', label:'Reports', icon:'chart'},
-      {id:'targets', label:'Targets', icon:'target'} ] }
+      {id:'reports', label:'Reports', icon:'chart'} ] }
   ];
   var LABELS = {}; NAV.forEach(function(g){ g.items.forEach(function(it){ LABELS[it.id]=it.label; }); });
 
@@ -72,6 +64,7 @@
     jobs: { open: 0, overdue: 0, completed: 0, list: [] },
     vendors: [],
     materials: [],
+    equipment: [], crews: [], purchases: [], bills: [], inspections: [],
     finance: { receivable: 0, payable: 0, pendingPayments: 0 }
   };
 
@@ -237,6 +230,89 @@
   };
 
   // Reports with tabs + export
+  V.materials = function(){
+    var rows=DB.materials.map(function(m){
+      var low=m.onHand<=m.reorder;
+      return '<tr><td class="cell-strong">'+esc(m.name)+'</td><td>'+esc(m.project)+'</td>'+
+        '<td class="num">'+esc(m.onHand)+' '+esc(m.unit)+'</td><td class="num">'+esc(m.reorder)+' '+esc(m.unit)+'</td>'+
+        '<td>'+(low?'<span class="pill pill--red">Low</span>':'<span class="pill pill--green">OK</span>')+'</td></tr>';
+    }).join('');
+    return head('Materials','Stock on hand against reorder levels, by package.')+
+      card('<div class="tablewrap"><table class="data"><thead><tr><th>Material</th><th>Package</th><th class="num">On Hand</th><th class="num">Reorder At</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table></div>');
+  };
+
+  V.equipment = function(){
+    var pillFor=function(a){ return a==='On Site'?'green':(a==='Maintenance'?'red':'amber'); };
+    var rows=DB.equipment.map(function(e){
+      return '<tr><td class="cell-strong">'+esc(e.name)+'</td><td>'+esc(e.type)+'</td>'+
+        '<td><span class="pill pill--'+pillFor(e.availability)+'">'+esc(e.availability)+'</span></td>'+
+        '<td>'+esc(e.location)+'</td><td>'+esc(e.operator)+'</td></tr>';
+    }).join('');
+    return head('Equipment','Plant and machinery deployed across the airport site.')+
+      card('<div class="tablewrap"><table class="data"><thead><tr><th>Asset</th><th>Type</th><th>Availability</th><th>Location</th><th>Operator</th></tr></thead><tbody>'+rows+'</tbody></table></div>');
+  };
+
+  V.labour = function(){
+    var totH=DB.crews.reduce(function(s,c){return s+c.headcount;},0);
+    var totP=DB.crews.reduce(function(s,c){return s+c.present;},0);
+    var rows=DB.crews.map(function(c){
+      var pct=c.headcount?Math.round(c.present/c.headcount*100):0;
+      return '<tr><td class="cell-strong">'+esc(c.name)+'</td><td>'+esc(c.trade)+'</td><td>'+esc(c.package)+'</td>'+
+        '<td class="num">'+c.headcount+'</td><td class="num">'+c.present+'</td>'+
+        '<td><div class="mini"><div class="mini__track"><div class="mini__fill" style="width:'+pct+'%"></div></div><span class="mini__pct">'+pct+'%</span></div></td></tr>';
+    }).join('');
+    return head('Labour & Attendance','Crews on site today — headcount and attendance by package.')+
+      '<div class="kpis" style="grid-template-columns:repeat(3,1fr)">'+
+        '<div class="kpi" style="--k:var(--blue)"><div class="kpi__label">Crews</div><div class="kpi__val">'+DB.crews.length+'</div><div class="kpi__sub">on the airport site</div></div>'+
+        '<div class="kpi" style="--k:var(--steel)"><div class="kpi__label">On the books</div><div class="kpi__val">'+totH+'</div><div class="kpi__sub">total headcount</div></div>'+
+        '<div class="kpi" style="--k:var(--green)"><div class="kpi__label">Present today</div><div class="kpi__val">'+totP+'</div><div class="kpi__sub">'+(totH?Math.round(totP/totH*100):0)+'% attendance</div></div>'+
+      '</div>'+
+      card('<div class="tablewrap"><table class="data"><thead><tr><th>Crew</th><th>Trade</th><th>Package</th><th class="num">Headcount</th><th class="num">Present</th><th>Attendance</th></tr></thead><tbody>'+rows+'</tbody></table></div>');
+  };
+
+  V.purchase = function(){
+    var pillFor=function(s){ return {Requested:'amber',Approved:'blue',Ordered:'blue',Delivered:'green'}[s]||'gray'; };
+    var rows=DB.purchases.map(function(p){
+      return '<tr><td class="cell-strong">'+esc(p.name)+'</td><td>'+esc(p.package)+'</td><td>'+esc(p.quantity)+'</td>'+
+        '<td>'+esc(p.vendor)+'</td><td><span class="pill pill--'+pillFor(p.status)+'">'+esc(p.status)+'</span></td>'+
+        '<td class="num">'+inrFull(p.value)+'</td></tr>';
+    }).join('');
+    var total=DB.purchases.reduce(function(s,p){return s+p.value;},0);
+    return head('Purchase Requests','Material and hire requests raised against packages.')+
+      card('<div class="tablewrap"><table class="data"><thead><tr><th>Request</th><th>Package</th><th>Quantity</th><th>Vendor</th><th>Status</th><th class="num">Value (₹)</th></tr></thead><tbody>'+rows+
+        '<tr><td class="cell-strong" colspan="5">Total requested</td><td class="num cell-strong">'+inrFull(total)+'</td></tr></tbody></table></div>');
+  };
+
+  V.billing = function(){
+    var pillFor=function(s){ return {Submitted:'amber',Certified:'blue',Paid:'green'}[s]||'gray'; };
+    var rows=DB.bills.map(function(b){
+      return '<tr><td class="cell-strong">'+esc(b.name)+'</td><td>'+esc(b.package)+'</td><td>'+esc(b.client)+'</td>'+
+        '<td class="num">'+inrFull(b.amount)+'</td><td><span class="pill pill--'+pillFor(b.status)+'">'+esc(b.status)+'</span></td></tr>';
+    }).join('');
+    var total=DB.bills.reduce(function(s,b){return s+b.amount;},0);
+    var paid=DB.bills.filter(function(b){return b.status==='Paid';}).reduce(function(s,b){return s+b.amount;},0);
+    return head('Client Billing','Running-account bills raised to the airport authorities.')+
+      '<div class="kpis" style="grid-template-columns:repeat(3,1fr)">'+
+        '<div class="kpi" style="--k:var(--accent)"><div class="kpi__label">Billed to date</div><div class="kpi__val">'+inr(total)+'</div><div class="kpi__sub">across all packages</div></div>'+
+        '<div class="kpi" style="--k:var(--green)"><div class="kpi__label">Received</div><div class="kpi__val">'+inr(paid)+'</div><div class="kpi__sub">bills marked paid</div></div>'+
+        '<div class="kpi" style="--k:var(--amber)"><div class="kpi__label">Outstanding</div><div class="kpi__val">'+inr(total-paid)+'</div><div class="kpi__sub">submitted or certified</div></div>'+
+      '</div>'+
+      card('<div class="tablewrap"><table class="data"><thead><tr><th>Bill</th><th>Package</th><th>Client</th><th class="num">Amount (₹)</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table></div>');
+  };
+
+  function inspectionView(kind){
+    var pillFor=function(r){ return {Pass:'green',Fail:'red',Open:'amber'}[r]||'gray'; };
+    var list=DB.inspections.filter(function(i){return i.type===kind;});
+    var rows=list.map(function(i){
+      return '<tr><td class="cell-strong">'+esc(i.name)+'</td><td>'+esc(i.package)+'</td>'+
+        '<td><span class="pill pill--'+pillFor(i.result)+'">'+esc(i.result)+'</span></td><td>'+esc(i.inspector)+'</td></tr>';
+    }).join('');
+    return head(kind, kind+' inspections logged across the airport packages.')+
+      card('<div class="tablewrap"><table class="data"><thead><tr><th>Inspection</th><th>Package</th><th>Result</th><th>Inspector</th></tr></thead><tbody>'+rows+'</tbody></table></div>');
+  }
+  V.quality = function(){ return inspectionView('Quality'); };
+  V.safety = function(){ return inspectionView('Safety'); };
+
   // Reports derive entirely from the four Zoho modules — no hardcoded rows.
   function reportSet(){
     return {
@@ -353,6 +429,11 @@
     if (d.jobs) DB.jobs.list = d.jobs;
     if (d.vendors) DB.vendors = d.vendors;
     if (d.materials) DB.materials = d.materials;
+    if (d.equipment) DB.equipment = d.equipment;
+    if (d.crews) DB.crews = d.crews;
+    if (d.purchases) DB.purchases = d.purchases;
+    if (d.bills) DB.bills = d.bills;
+    if (d.inspections) DB.inspections = d.inspections;
     var jl = DB.jobs.list;
     DB.jobs.open = jl.filter(function(j){return j.status==='Open';}).length;
     DB.jobs.overdue = jl.filter(function(j){return j.status==='Overdue';}).length;
