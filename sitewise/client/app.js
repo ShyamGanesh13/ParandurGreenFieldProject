@@ -63,48 +63,16 @@
   ];
   var LABELS = {}; NAV.forEach(function(g){ g.items.forEach(function(it){ LABELS[it.id]=it.label; }); });
 
-  // ------------------------------------------------------------ seed data
+  // ------------------------------------------------------------ data
+  // Empty until Zoho Projects fills it. Nothing here is hardcoded demo data —
+  // every value comes from the four Zoho custom modules via /bootstrap.
   var DB = {
-    company: { sites: 6, workers: 48, present: 41, lowStock: 3, overdue: 2 },
-    projects: [
-      { name:'Metro Business Park', code:'MBP-01', site:'Guindy, Chennai', client:'Marg Estates', budget:48000000, spent:33600000, status:'On Track', progress:70, mgr:'R. Anand' },
-      { name:'Heritage Mall Retrofit', code:'HMR-04', site:'T. Nagar, Chennai', client:'Prestige Retail', budget:32000000, spent:29800000, status:'At Risk', progress:88, mgr:'S. Kavya' },
-      { name:'Lakeview Apartments', code:'LVA-07', site:'OMR, Chennai', client:'Casagrand', budget:61000000, spent:24400000, status:'On Track', progress:40, mgr:'M. Farhan' },
-      { name:'Coastal Tech Campus', code:'CTC-02', site:'Mahabalipuram', client:'Zoho Corp', budget:95000000, spent:14250000, status:'On Track', progress:15, mgr:'R. Anand' },
-      { name:'Green Valley Villas', code:'GVV-11', site:'Sriperumbudur', client:'Alliance Group', budget:27000000, spent:26400000, status:'Delayed', progress:96, mgr:'S. Kavya' },
-      { name:'Skyline Residency', code:'SKR-09', site:'Porur, Chennai', client:'Radiance Realty', budget:54000000, spent:37800000, status:'On Track', progress:66, mgr:'M. Farhan' }
-    ],
-    jobs: { open:9, overdue:2, completed:14, list:[
-      { title:'Level 4 slab pour', project:'Metro Business Park', due:'2026-08-18', status:'Open', crew:'Concrete A' },
-      { title:'Facade glazing — east', project:'Heritage Mall Retrofit', due:'2026-08-12', status:'Overdue', crew:'Facade' },
-      { title:'Basement waterproofing', project:'Lakeview Apartments', due:'2026-08-22', status:'Open', crew:'Waterproof' },
-      { title:'MEP first-fix — Block C', project:'Skyline Residency', due:'2026-08-25', status:'Open', crew:'MEP' },
-      { title:'Handover snagging', project:'Green Valley Villas', due:'2026-08-10', status:'Overdue', crew:'Finishing' },
-      { title:'Site clearing & levelling', project:'Coastal Tech Campus', due:'2026-08-30', status:'Open', crew:'Earthworks' },
-      { title:'Lift shaft inspection', project:'Metro Business Park', due:'2026-08-05', status:'Completed', crew:'QA' }
-    ]},
-    vendors: [
-      { name:'Ultratech Cement', category:'Materials', outstanding:1830000, rating:4.6, terms:'30 days' },
-      { name:'Tata Steel Rebar', category:'Materials', outstanding:2450000, rating:4.4, terms:'45 days' },
-      { name:'Sundaram Scaffolding', category:'Equipment', outstanding:410000, rating:4.1, terms:'15 days' },
-      { name:'Coromandel Ready-Mix', category:'Materials', outstanding:975000, rating:4.7, terms:'On delivery' },
-      { name:'Sri Balaji Labour Co.', category:'Labour', outstanding:1280000, rating:4.0, terms:'Weekly' },
-      { name:'Voltas HVAC', category:'MEP', outstanding:0, rating:4.5, terms:'60 days' }
-    ],
-    materials: [
-      { name:'OPC 53 Cement', unit:'bags', onHand:120, reorder:200, project:'Metro Business Park' },
-      { name:'TMT Bar 16mm', unit:'tonnes', onHand:4, reorder:10, project:'Lakeview Apartments' },
-      { name:'Ready-Mix M30', unit:'m³', onHand:0, reorder:20, project:'Heritage Mall Retrofit' },
-      { name:'River Sand', unit:'m³', onHand:85, reorder:40, project:'Skyline Residency' },
-      { name:'AAC Blocks', unit:'nos', onHand:3200, reorder:2000, project:'Green Valley Villas' }
-    ],
-    finance: { receivable: 45359200, payable: 6945000, pendingPayments: 6945000 },
-    expensesByCategory: [
-      { category:'Materials', total:8460000 }, { category:'Labour', total:5120000 },
-      { category:'Equipment Hire', total:1875000 }, { category:'Fuel & Transport', total:642000 },
-      { category:'Site Overheads', total:498000 }, { category:'Safety & PPE', total:214000 }
-    ],
-    inspections: 2, deliveries: 4
+    company: { sites: 0, lowStock: 0, overdue: 0 },
+    projects: [],
+    jobs: { open: 0, overdue: 0, completed: 0, list: [] },
+    vendors: [],
+    materials: [],
+    finance: { receivable: 0, payable: 0, pendingPayments: 0 }
   };
 
   // ------------------------------------------------------------ helpers
@@ -255,42 +223,45 @@
   };
 
   V.expenses = function(){
-    var rows=DB.expensesByCategory.map(function(e){ return '<tr><td class="cell-strong">'+esc(e.category)+'</td><td class="num">'+inrFull(e.total)+'</td></tr>'; }).join('');
-    var total=DB.expensesByCategory.reduce(function(s,e){return s+e.total;},0);
-    return head('Expenses','Spend by category across the portfolio this month.')+
+    var list=DB.projects.slice().sort(function(a,b){return b.spent-a.spent;});
+    var total=list.reduce(function(s,p){return s+p.spent;},0) || 1;
+    var rows=list.map(function(p){ return '<tr><td><span class="cell-strong">'+esc(p.name)+'</span><span class="cell-sub">'+esc(p.code)+'</span></td>'+
+      '<td class="num">'+inrFull(p.spent)+'</td><td class="num">'+inrFull(p.budget)+'</td></tr>'; }).join('');
+    return head('Expenses','Spend to date on each airport work package.')+
       '<div class="grid grid--2">'+
-        card('<div class="tablewrap"><table class="data"><thead><tr><th>Category</th><th class="num">Total (₹)</th></tr></thead><tbody>'+rows+
-          '<tr><td class="cell-strong">Total</td><td class="num cell-strong">'+inrFull(total)+'</td></tr></tbody></table></div>')+
+        card('<div class="tablewrap"><table class="data"><thead><tr><th>Package</th><th class="num">Spent (₹)</th><th class="num">Budget (₹)</th></tr></thead><tbody>'+rows+
+          '<tr><td class="cell-strong">Total spent</td><td class="num cell-strong">'+inrFull(total)+'</td><td></td></tr></tbody></table></div>')+
         '<div class="card"><div class="card__head"><h3>Share of spend</h3></div><div class="card__body">'+
-          hbars(DB.expensesByCategory.map(function(e){ return {label:e.category, sub:inr(e.total), pct:Math.round(e.total/total*100), color:'var(--accent)'}; }))+'</div></div>'+
+          hbars(list.map(function(p){ return {label:p.name, sub:inr(p.spent), pct:Math.round(p.spent/total*100), color:'var(--accent)'}; }))+'</div></div>'+
       '</div>';
   };
 
   // Reports with tabs + export
-  var REPORTS = {
-    'material': { label:'Material Consumption', cols:['Material','Project','Consumed','Value (₹)'], rows:[
-      ['OPC 53 Cement','Metro Business Park','1,240 bags','5,58,000'],['TMT Bar 16mm','Lakeview Apartments','32 t','21,44,000'],
-      ['Ready-Mix M30','Heritage Mall Retrofit','410 m³','24,60,000'],['AAC Blocks','Green Valley Villas','9,800 nos','4,90,000'] ]},
-    'labour': { label:'Labour Cost', cols:['Trade','Headcount','Man-days','Cost (₹)'], rows:[
-      ['Mason','18','412','12,36,000'],['Steel Fixer','9','208','7,28,000'],['Carpenter','7','160','4,80,000'],['Helper','14','336','6,72,000'] ]},
-    'profit': { label:'Project Profit', cols:['Project','Billed (₹)','Cost (₹)','Margin'], rows:[
-      ['Metro Business Park','3,80,00,000','3,36,00,000','11.6%'],['Skyline Residency','4,10,00,000','3,78,00,000','7.8%'],
-      ['Heritage Mall Retrofit','3,10,00,000','2,98,00,000','3.9%'] ]},
-    'delayed': { label:'Delayed Activities', cols:['Activity','Project','Days Late','Owner'], rows:[
-      ['Facade glazing — east','Heritage Mall Retrofit','2','Facade crew'],['Handover snagging','Green Valley Villas','4','Finishing crew'] ]},
-    'expense': { label:'Monthly Expense', cols:['Category','Total (₹)'], rows: DB.expensesByCategory.map(function(e){ return [e.category, Math.round(e.total).toLocaleString('en-IN')]; }) },
-    'outstanding': { label:'Vendor Outstanding', cols:['Vendor','Category','Outstanding (₹)'], rows: DB.vendors.filter(function(v){return v.outstanding;}).map(function(v){ return [v.name,v.category,v.outstanding.toLocaleString('en-IN')]; }) },
-    'salary': { label:'Worker Salary', cols:['Worker','Trade','Days','Payable (₹)'], rows:[
-      ['A. Murugan','Mason','24','21,600'],['K. Raja','Steel Fixer','22','19,800'],['S. Devi','Helper','25','15,000'] ]},
-    'inventory': { label:'Inventory', cols:['Material','On Hand','Reorder At','Status'], rows: DB.materials.map(function(m){ return [m.name, m.onHand+' '+m.unit, m.reorder+' '+m.unit, m.onHand<=m.reorder?'Low':'OK']; }) }
-  };
-  var reportTab='expense';
+  // Reports derive entirely from the four Zoho modules — no hardcoded rows.
+  function reportSet(){
+    return {
+      'budget': { label:'Package Budget', cols:['Package','Client','Budget (₹)','Spent (₹)','Consumed'], numCols:[2,3,4],
+        rows: DB.projects.map(function(p){ return [p.name, p.client, inrFull(p.budget), inrFull(p.spent), Math.round(p.spent/(p.budget||1)*100)+'%']; }) },
+      'delayed': { label:'Overdue Jobs', cols:['Job','Package','Due','Status'], numCols:[],
+        rows: DB.jobs.list.filter(function(j){ return j.status==='Overdue'; }).map(function(j){ return [j.title, j.project, j.due, j.status]; }) },
+      'outstanding': { label:'Vendor Outstanding', cols:['Vendor','Category','Outstanding (₹)'], numCols:[2],
+        rows: DB.vendors.filter(function(v){ return v.outstanding; }).map(function(v){ return [v.name, v.category, inrFull(v.outstanding)]; }) },
+      'inventory': { label:'Inventory & Low Stock', cols:['Material','On Hand','Reorder At','Status'], numCols:[],
+        rows: DB.materials.map(function(m){ return [m.name, m.onHand+' '+m.unit, m.reorder+' '+m.unit, m.onHand<=m.reorder?'Low':'OK']; }) }
+    };
+  }
+  var reportTab='budget';
   V.reports = function(){
-    var tabs=Object.keys(REPORTS).map(function(k){ return '<button class="tab'+(k===reportTab?' is-active':'')+'" data-tab="'+k+'">'+esc(REPORTS[k].label)+'</button>'; }).join('');
-    var r=REPORTS[reportTab];
-    var thead='<tr>'+r.cols.map(function(c,i){ return '<th'+(i>0&&/₹|Days|Man|Headcount|Margin/.test(c)?' class="num"':'')+'>'+esc(c)+'</th>'; }).join('')+'</tr>';
-    var tbody=r.rows.map(function(row){ return '<tr>'+row.map(function(c,i){ return '<td'+(i>0?' class="num"':'')+'>'+(i===0?'<span class="cell-strong">'+esc(c)+'</span>':esc(c))+'</td>'; }).join('')+'</tr>'; }).join('');
-    return head('Reports','Generate a report, then export to Excel (CSV) or PDF.')+
+    var R = reportSet();
+    if (!R[reportTab]) reportTab = 'budget';
+    var r = R[reportTab];
+    var tabs=Object.keys(R).map(function(k){ return '<button class="tab'+(k===reportTab?' is-active':'')+'" data-tab="'+k+'">'+esc(R[k].label)+'</button>'; }).join('');
+    var isNum=function(i){ return r.numCols.indexOf(i)>-1; };
+    var thead='<tr>'+r.cols.map(function(c,i){ return '<th'+(isNum(i)?' class="num"':'')+'>'+esc(c)+'</th>'; }).join('')+'</tr>';
+    var tbody=r.rows.length
+      ? r.rows.map(function(row){ return '<tr>'+row.map(function(c,i){ return '<td'+(isNum(i)?' class="num"':'')+'>'+(i===0?'<span class="cell-strong">'+esc(c)+'</span>':esc(c))+'</td>'; }).join('')+'</tr>'; }).join('')
+      : '<tr><td colspan="'+r.cols.length+'" class="cell-sub" style="padding:22px">Nothing to report.</td></tr>';
+    return head('Reports','Generated live from Zoho Projects. Export to Excel (CSV) or print to PDF.')+
       '<div class="tabs">'+tabs+'</div>'+
       '<div class="card"><div class="card__head"><h3>'+esc(r.label)+'</h3><div class="topbar__actions">'+
         '<button class="btn" id="exp-csv">'+icon('download')+'Excel (CSV)</button>'+
@@ -310,10 +281,10 @@
 
   // ------------------------------------------------------------ export
   function exportCSV(){
-    var r=REPORTS[reportTab];
+    var r=reportSet()[reportTab];
     var lines=[r.cols.join(',')].concat(r.rows.map(function(row){ return row.map(function(c){ return '"'+String(c).replace(/"/g,'""')+'"'; }).join(','); }));
     var blob=new Blob([lines.join('\n')],{type:'text/csv'});
-    var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='sitewise-'+reportTab+'.csv'; a.click();
+    var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='parandur-aerobuild-'+reportTab+'.csv'; a.click();
     setTimeout(function(){URL.revokeObjectURL(a.href);},1000);
     toast('Exported '+r.label+' to CSV');
   }
@@ -396,17 +367,14 @@
     DB.company.overdue = DB.jobs.overdue;
   }
   function loadData(){
-    // Live function first (Zoho Projects); on auth failure bounce to the gate;
-    // otherwise fall back to the bundled Zoho snapshot so the demo never dead-ends.
+    // Zoho Projects is the only source of truth — no snapshot, no seed fallback.
+    // If the read fails we surface it rather than show anything that isn't live.
     return fetch(API + '/bootstrap', { headers: { 'X-App-Token': token() || '' } })
-      .then(function(r){ if (r.status === 401) throw { auth: true }; if (!r.ok) throw new Error('no live'); return r.json(); })
-      .then(function(j){ hydrate(j); DATA_SOURCE = 'Zoho Projects (live)'; })
-      .catch(function(e){
-        if (e && e.auth) throw e;
-        return fetch('data.json').then(function(r){ if(!r.ok) throw new Error('no snapshot'); return r.json(); })
-          .then(function(j){ hydrate(j); DATA_SOURCE = 'Zoho Projects'; })
-          .catch(function(){ /* keep sample data */ });
-      });
+      .then(function(r){
+        if (r.status === 401) throw { auth: true };
+        return r.json().then(function(j){ if (!r.ok) throw new Error(j.error || 'Could not read from Zoho Projects.'); return j; });
+      })
+      .then(function(j){ hydrate(j); DATA_SOURCE = 'Zoho Projects'; });
   }
 
   // ------------------------------------------------------------ auth gate
@@ -446,7 +414,11 @@
       // Role-based landing: the foreman works from Jobs, the manager from the portfolio dashboard.
       if (state.user && state.user.role === 'foreman' && (!location.hash || location.hash === '#dashboard' || location.hash === '#')) { location.hash = '#jobs'; }
       route();
-    }).catch(function(e){ if (e && e.auth){ setToken(null); showGate('Your session expired. Sign in again.'); } });
+    }).catch(function(e){
+      if (e && e.auth){ setToken(null); showGate('Your session expired. Sign in again.'); return; }
+      showApp();
+      $('#view').innerHTML = '<div class="card"><div class="empty">'+icon('inbox')+'<h3>Couldn’t reach Zoho Projects</h3><p>'+esc((e && e.message) || 'Please try again in a moment.')+'</p></div></div>';
+    });
   }
 
   function signIn(){
