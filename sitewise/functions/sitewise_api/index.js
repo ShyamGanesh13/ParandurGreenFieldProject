@@ -180,6 +180,28 @@ app.patch(['/api/jobs/:id/status', '/jobs/:id/status'], requireAuth, async (req,
   } catch (e) { next(e); }
 });
 
+/** Create a record in a write-enabled module. Role-gated on the server too. */
+const CREATE = {
+  job:        { module: 'site_job',         map: (b) => ({ name: b.title, project_name: b.project || '', crew: b.crew || '', site_job_cf_0001: b.due || '', job_status: b.status || 'Open' }) },
+  purchase:   { module: 'purchase_request', map: (b) => ({ name: b.name, package: b.package || '', quantity: b.quantity || '', vendor: b.vendor || '', request_status: b.status || 'Requested', order_value: num(b.value) }) },
+  inspection: { module: 'site_inspection',   map: (b) => ({ name: b.name, inspection_type: b.type || 'Quality', package: b.package || '', result: b.result || 'Open', inspector: b.inspector || '' }) },
+  bill:       { module: 'client_bill', role: 'manager', map: (b) => ({ name: b.name, package: b.package || '', client: b.client || '', bill_amount: num(b.amount), client_bill_cf_0001: b.status || 'Submitted' }) },
+  material:   { module: 'material', role: 'manager', map: (b) => ({ name: b.name, unit: b.unit || '', on_hand: num(b.onHand), reorder_level: num(b.reorder), site: b.project || '' }) },
+  equipment:  { module: 'equipment', role: 'manager', map: (b) => ({ name: b.name, machine_type: b.type || '', availability: b.availability || 'On Site', location: b.location || '', operator: b.operator || '' }) },
+  crew:       { module: 'labour_crew', role: 'manager', map: (b) => ({ name: b.name, trade: b.trade || '', headcount: num(b.headcount), present_today: num(b.present), package: b.package || '' }) }
+};
+app.post(['/api/create/:kind', '/create/:kind'], requireAuth, async (req, res, next) => {
+  try {
+    const cfg = CREATE[req.params.kind];
+    if (!cfg) return res.status(400).json({ error: 'Unknown record type.' });
+    if (cfg.role && req.user.r !== cfg.role) return res.status(403).json({ error: 'Your role cannot create this record.' });
+    const body = cfg.map(req.body || {});
+    if (!body.name || !String(body.name).trim()) return res.status(400).json({ error: 'A name or title is required.' });
+    const created = await zoho(`/module/${cfg.module}/entities`, { method: 'POST', body });
+    res.json({ ok: true, id: ((created && (created.data || created)) || {}).id });
+  } catch (e) { next(e); }
+});
+
 app.use((err, _req, res, _next) => {
   const status = err.status || 500;
   if (status >= 500) console.error(err);

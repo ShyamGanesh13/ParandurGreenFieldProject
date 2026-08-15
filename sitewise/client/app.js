@@ -7,6 +7,7 @@
     grid:'M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z',
     plane:'M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z',
     search:'M17 17l4 4M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16z',
+    plus:'M12 5v14M5 12h14',
     building:'M3 21h18M6 21V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v17M18 21V9a1 1 0 0 1 1-1h1M9 7h2M9 11h2M9 15h2',
     hammer:'M14 6l6 6M4 20l8-8M12 8l4-4 4 4-4 4M14 10l-9 9',
     clipboard:'M9 4h6a1 1 0 0 1 1 1v1H8V5a1 1 0 0 1 1-1zM8 6H6a1 1 0 0 0-1 1v13a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1h-2',
@@ -208,7 +209,7 @@
       var pct=total?Math.round(s.value/total*100):0;
       return '<li><i class="dot" style="background:'+s.color+'"></i><span>'+s.label+'</span><b class="mono">'+s.value+'</b><small>'+pct+'%</small></li>';
     }).join('')+'</ul>';
-    return head('Jobs','Work items scheduled across all sites.')+
+    return head('Jobs','Work items scheduled across all sites.', newBtn('job','New Job'))+
       '<div class="split">'+ftable(cols,rows,filters)+
         '<div class="card split__aside"><div class="card__head"><h3>By status</h3><span class="muted">'+total+' jobs</span></div><div class="card__body">'+donut(seg,total,'jobs')+breakdown+'</div></div>'+
       '</div>';
@@ -255,7 +256,7 @@
       ] };
     });
     var filters=[{label:'Low stock',val:'Low'},{label:'OK',val:'OK'}];
-    return head('Materials','Stock on hand against reorder levels, by package.')+ftable(cols,rows,filters);
+    return head('Materials','Stock on hand against reorder levels, by package.', newBtn('material','New Material'))+ftable(cols,rows,filters);
   };
 
   V.equipment = function(){
@@ -268,7 +269,7 @@
       ] };
     });
     var filters=[{label:'On Site',val:'On Site'},{label:'Idle',val:'Idle'},{label:'Maintenance',val:'Maintenance'}];
-    return head('Equipment','Plant and machinery deployed across the airport site.')+ftable(cols,rows,filters);
+    return head('Equipment','Plant and machinery deployed across the airport site.', newBtn('equipment','New Equipment'))+ftable(cols,rows,filters);
   };
 
   V.labour = function(){
@@ -282,7 +283,7 @@
         '<div class="mini"><div class="mini__track"><div class="mini__fill" style="width:'+pct+'%"></div></div><span class="mini__pct">'+pct+'%</span></div>'
       ] };
     });
-    return head('Labour & Attendance','Crews on site today — headcount and attendance by package.')+
+    return head('Labour & Attendance','Crews on site today — headcount and attendance by package.', newBtn('crew','New Crew'))+
       '<div class="kpis" style="grid-template-columns:repeat(3,1fr)">'+
         '<div class="kpi" style="--k:var(--blue)"><div class="kpi__label">Crews</div><div class="kpi__val">'+DB.crews.length+'</div><div class="kpi__sub">on the airport site</div></div>'+
         '<div class="kpi" style="--k:var(--steel)"><div class="kpi__label">On the books</div><div class="kpi__val">'+totH+'</div><div class="kpi__sub">total headcount</div></div>'+
@@ -302,7 +303,7 @@
     var total=DB.purchases.reduce(function(s,p){return s+p.value;},0);
     var foot='<tr><td class="cell-strong" colspan="5">Total requested</td><td class="num cell-strong">'+inrFull(total)+'</td></tr>';
     var filters=[{label:'Requested',val:'Requested'},{label:'Approved',val:'Approved'},{label:'Ordered',val:'Ordered'},{label:'Delivered',val:'Delivered'}];
-    return head('Purchase Requests','Material and hire requests raised against packages.')+ftable(cols,rows,filters,foot);
+    return head('Purchase Requests','Material and hire requests raised against packages.', newBtn('purchase','Raise PR'))+ftable(cols,rows,filters,foot);
   };
 
   V.billing = function(){
@@ -317,7 +318,7 @@
     var total=DB.bills.reduce(function(s,b){return s+b.amount;},0);
     var paid=DB.bills.filter(function(b){return b.status==='Paid';}).reduce(function(s,b){return s+b.amount;},0);
     var filters=[{label:'Submitted',val:'Submitted'},{label:'Certified',val:'Certified'},{label:'Paid',val:'Paid'}];
-    return head('Client Billing','Running-account bills raised to the airport authorities.')+
+    return head('Client Billing','Running-account bills raised to the airport authorities.', newBtn('bill','Raise Bill'))+
       '<div class="kpis" style="grid-template-columns:repeat(3,1fr)">'+
         '<div class="kpi" style="--k:var(--accent)"><div class="kpi__label">Billed to date</div><div class="kpi__val">'+inr(total)+'</div><div class="kpi__sub">across all packages</div></div>'+
         '<div class="kpi" style="--k:var(--green)"><div class="kpi__label">Received</div><div class="kpi__val">'+inr(paid)+'</div><div class="kpi__sub">bills marked paid</div></div>'+
@@ -336,7 +337,7 @@
       ] };
     });
     var filters=[{label:'Pass',val:'Pass'},{label:'Open',val:'Open'},{label:'Fail',val:'Fail'}];
-    return head(kind, kind+' inspections logged across the airport packages.')+ftable(cols,rows,filters);
+    return head(kind, kind+' inspections logged across the airport packages.', newBtn('inspection','Log '+kind, {type:kind}))+ftable(cols,rows,filters);
   }
   V.quality = function(){ return inspectionView('Quality'); };
   V.safety = function(){ return inspectionView('Safety'); };
@@ -381,8 +382,101 @@
       '<p>The shell, data layer and design system are in place — this screen wires into the same Zoho Projects backend as the rest.</p></div></div>';
   }
 
-  function head(t,s){ return '<div class="page-head"><div class="page-head__row"><div><h1>'+esc(t)+'</h1><p>'+esc(s)+'</p></div></div></div>'; }
+  function head(t,s,action){ return '<div class="page-head"><div class="page-head__row"><div><h1>'+esc(t)+'</h1><p>'+esc(s)+'</p></div>'+(action||'')+'</div></div>'; }
   function card(inner){ return '<div class="card">'+inner+'</div>'; }
+
+  // ------------------------------------------------------------ create/edit forms
+  function pkgOpts(){ return DB.projects.map(function(p){ return p.name; }); }
+  function vendorOpts(){ return DB.vendors.map(function(v){ return v.name; }); }
+  var FORMS = {
+    job:        { title:'New Job', kind:'job', fields:function(){ return [
+      {name:'title', label:'Job title', type:'text', required:true},
+      {name:'project', label:'Package', type:'select', options:pkgOpts()},
+      {name:'crew', label:'Crew', type:'text'},
+      {name:'due', label:'Due date', type:'date'},
+      {name:'status', label:'Status', type:'select', options:['Open','Overdue','Completed'], value:'Open'}
+    ]; } },
+    purchase:   { title:'Raise Purchase Request', kind:'purchase', fields:function(){ return [
+      {name:'name', label:'Request title', type:'text', required:true, placeholder:'e.g. PR-1048 OPC Cement'},
+      {name:'package', label:'Package', type:'select', options:pkgOpts()},
+      {name:'quantity', label:'Quantity', type:'text', placeholder:'e.g. 500 bags'},
+      {name:'vendor', label:'Vendor', type:'select', options:vendorOpts()},
+      {name:'status', label:'Status', type:'select', options:['Requested','Approved','Ordered','Delivered'], value:'Requested'},
+      {name:'value', label:'Order value (₹)', type:'number'}
+    ]; } },
+    inspection: { title:'Log Inspection', kind:'inspection', fields:function(){ return [
+      {name:'name', label:'Inspection', type:'text', required:true, placeholder:'e.g. Runway PQC slump test'},
+      {name:'type', label:'Type', type:'select', options:['Quality','Safety']},
+      {name:'package', label:'Package', type:'select', options:pkgOpts()},
+      {name:'result', label:'Result', type:'select', options:['Pass','Open','Fail'], value:'Open'},
+      {name:'inspector', label:'Inspector', type:'text'}
+    ]; } },
+    bill:       { title:'Raise Client Bill', kind:'bill', role:'manager', fields:function(){ return [
+      {name:'name', label:'Bill number', type:'text', required:true, placeholder:'e.g. RA-08 Terminal'},
+      {name:'package', label:'Package', type:'select', options:pkgOpts()},
+      {name:'client', label:'Client', type:'text'},
+      {name:'amount', label:'Amount (₹)', type:'number'},
+      {name:'status', label:'Status', type:'select', options:['Submitted','Certified','Paid'], value:'Submitted'}
+    ]; } },
+    material:   { title:'New Material', kind:'material', role:'manager', fields:function(){ return [
+      {name:'name', label:'Material', type:'text', required:true},
+      {name:'unit', label:'Unit', type:'text', placeholder:'bags / tonnes / m3'},
+      {name:'onHand', label:'On hand', type:'number'},
+      {name:'reorder', label:'Reorder at', type:'number'},
+      {name:'project', label:'Package', type:'select', options:pkgOpts()}
+    ]; } },
+    equipment:  { title:'New Equipment', kind:'equipment', role:'manager', fields:function(){ return [
+      {name:'name', label:'Asset', type:'text', required:true},
+      {name:'type', label:'Type', type:'text', placeholder:'Excavator / Crane…'},
+      {name:'availability', label:'Availability', type:'select', options:['On Site','Idle','Maintenance'], value:'On Site'},
+      {name:'location', label:'Location', type:'select', options:pkgOpts()},
+      {name:'operator', label:'Operator', type:'text'}
+    ]; } },
+    crew:       { title:'New Crew', kind:'crew', role:'manager', fields:function(){ return [
+      {name:'name', label:'Crew name', type:'text', required:true},
+      {name:'trade', label:'Trade', type:'text'},
+      {name:'headcount', label:'Headcount', type:'number'},
+      {name:'present', label:'Present today', type:'number'},
+      {name:'package', label:'Package', type:'select', options:pkgOpts()}
+    ]; } }
+  };
+  function canCreate(kind){ var f=FORMS[kind]; if(!f) return false; if(f.role && (!state.user || state.user.role!==f.role)) return false; return true; }
+  function newBtn(kind,label,prefill){ return canCreate(kind) ? '<button class="btn btn--solid" data-new="'+kind+'"'+(prefill?' data-prefill="'+esc(JSON.stringify(prefill))+'"':'')+'>'+icon('plus')+esc(label)+'</button>' : ''; }
+
+  function openForm(kind, prefill){
+    var f=FORMS[kind]; if(!f || !canCreate(kind)) return;
+    prefill=prefill||{};
+    var fields=f.fields();
+    var body=fields.map(function(fl){
+      var v=prefill[fl.name]!=null?prefill[fl.name]:(fl.value||'');
+      var input;
+      if(fl.type==='select'){
+        input='<select name="'+fl.name+'">'+fl.options.map(function(o){ return '<option'+(String(o)===String(v)?' selected':'')+'>'+esc(o)+'</option>'; }).join('')+'</select>';
+      } else {
+        input='<input name="'+fl.name+'" type="'+fl.type+'" '+(fl.required?'required ':'')+(fl.placeholder?'placeholder="'+esc(fl.placeholder)+'" ':'')+'value="'+esc(v)+'" />';
+      }
+      return '<div class="field"><label>'+esc(fl.label)+(fl.required?' <span class="req">*</span>':'')+'</label>'+input+'</div>';
+    }).join('');
+    $('#drawer-body').innerHTML='<div class="drawer__head"><h3>'+esc(f.title)+'</h3><button class="drawer__close" type="button" aria-label="Close">×</button></div>'+
+      '<form class="drawer__form">'+body+
+      '<p class="form-err" hidden></p>'+
+      '<div class="drawer__actions"><button class="btn" type="button" data-cancel>Cancel</button><button class="btn btn--solid" type="submit">Create</button></div></form>';
+    $('#drawer').hidden=false; $('#scrim').hidden=false;
+    var form=$('#drawer-body form');
+    var firstInput=form.querySelector('input,select'); if(firstInput) setTimeout(function(){ firstInput.focus(); },40);
+    $('#drawer-body').querySelector('.drawer__close').addEventListener('click', closeDrawer);
+    form.querySelector('[data-cancel]').addEventListener('click', closeDrawer);
+    form.addEventListener('submit', function(ev){
+      ev.preventDefault();
+      var vals={}; fields.forEach(function(fl){ var el=form.querySelector('[name="'+fl.name+'"]'); vals[fl.name]=el?el.value:''; });
+      var btn=form.querySelector('button[type=submit]'); btn.disabled=true; btn.textContent='Creating…';
+      var err=form.querySelector('.form-err'); err.hidden=true;
+      api('/create/'+kind, { method:'POST', body:JSON.stringify(vals) })
+        .then(function(){ toast(f.title.replace(/^New |^Raise |^Log /,'')+' created in Zoho Projects.'); closeDrawer(); return loadData().then(function(){ route(); }); })
+        .catch(function(e){ err.textContent=e.message||'Could not create the record.'; err.hidden=false; btn.disabled=false; btn.textContent='Create'; });
+    });
+  }
+  function closeDrawer(){ $('#drawer').hidden=true; $('#scrim').hidden=true; $('#drawer-body').innerHTML=''; }
 
   // ------------------------------------------------------------ filterable tables
   function toolbar(filters){
@@ -470,6 +564,9 @@
     window.scrollTo(0,0);
     animateBars(view);
     wireFilters(view);
+    Array.prototype.forEach.call(view.querySelectorAll('[data-new]'), function(btn){
+      btn.addEventListener('click', function(){ var pf=btn.getAttribute('data-prefill'); openForm(btn.getAttribute('data-new'), pf?JSON.parse(pf):null); });
+    });
     if(id==='jobs'){
       view.querySelectorAll('.jobsel').forEach(function(sel){
         sel.addEventListener('change', function(){
@@ -604,6 +701,8 @@
   $('#signout').addEventListener('click',signOut);
   $('#signin').addEventListener('click',signIn);
   ['u','p'].forEach(function(id){ var e=$('#'+id); if(e) e.addEventListener('keydown',function(ev){ if(ev.key==='Enter') signIn(); }); });
+  $('#scrim').addEventListener('click', closeDrawer);
+  document.addEventListener('keydown', function(ev){ if(ev.key==='Escape') closeDrawer(); });
   window.addEventListener('hashchange',route);
   boot();
 })();

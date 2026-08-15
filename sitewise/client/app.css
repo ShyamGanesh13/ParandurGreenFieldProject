@@ -390,6 +390,29 @@ table.data tbody tr:hover { background: var(--border-2); }
 .gate__demo { margin: 20px 0 0; font-size: 12.5px; color: var(--ink-3); }
 .gate__demo .mono { color: var(--ink); font-weight: 600; }
 
+/* slide-out drawer + create form */
+.scrim { position: fixed; inset: 0; background: rgba(6,8,12,.55); z-index: 80; }
+.scrim[hidden] { display: none; }
+.drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(440px, 100%); z-index: 90;
+  background: var(--surface); border-left: 1px solid var(--border); box-shadow: var(--shadow-lg);
+  overflow-y: auto; animation: slidein .22s cubic-bezier(.2,.7,.25,1); }
+.drawer[hidden] { display: none; }
+@keyframes slidein { from { transform: translateX(100%); } to { transform: translateX(0); } }
+.drawer__head { display: flex; align-items: center; justify-content: space-between; padding: 20px 22px;
+  border-bottom: 1px solid var(--border-2); position: sticky; top: 0; background: var(--surface); z-index: 1; }
+.drawer__head h3 { font-family: var(--font-display); font-weight: 700; font-size: 18px; margin: 0; }
+.drawer__close { width: 30px; height: 30px; border: 0; background: var(--border-2); color: var(--ink-2); border-radius: 8px; font-size: 19px; line-height: 1; }
+.drawer__close:hover { color: var(--ink); }
+.drawer__form { padding: 20px 22px 28px; }
+.drawer__form .field { margin-bottom: 15px; }
+.drawer__form label { display: block; font-size: 12.5px; font-weight: 600; color: var(--ink-2); margin-bottom: 6px; }
+.drawer__form label .req { color: var(--accent); }
+.drawer__form input, .drawer__form select { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border);
+  background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 14px; }
+.drawer__form input:focus-visible, .drawer__form select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
+.drawer__actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 22px; }
+.form-err { color: var(--red); font-size: 13px; margin: 12px 0 0; }
+
 /* toast */
 .toast {
   position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%);
