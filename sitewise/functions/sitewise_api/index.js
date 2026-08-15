@@ -50,19 +50,26 @@ const SESSION_HOURS = 12;
 
 // ---------------------------------------------------------------- oauth
 let tokenCache = { value: null, expiresAt: 0 };
+let refreshing = null;
 async function accessToken() {
-  const now = Date.now();
-  if (tokenCache.value && now < tokenCache.expiresAt) return tokenCache.value;
+  if (tokenCache.value && Date.now() < tokenCache.expiresAt) return tokenCache.value;
   if (!CLIENT_ID || !CLIENT_SECRET || !REFRESH_TOKEN) {
     const err = new Error('Zoho credentials are not configured. Set ZOHO_CLIENT_ID, ZOHO_CLIENT_SECRET and ZOHO_REFRESH_TOKEN in the Catalyst environment variables.');
     err.status = 503; throw err;
   }
-  const body = new URLSearchParams({ refresh_token: REFRESH_TOKEN, client_id: CLIENT_ID, client_secret: CLIENT_SECRET, grant_type: 'refresh_token' });
-  const res = await fetch(`${ACCOUNTS_HOST}/oauth/v2/token`, { method: 'POST', body });
-  const json = await res.json().catch(() => ({}));
-  if (!res.ok || !json.access_token) { const err = new Error(`Could not refresh the Zoho access token: ${json.error || res.status}`); err.status = 502; throw err; }
-  tokenCache = { value: json.access_token, expiresAt: now + ((json.expires_in || 3600) - 60) * 1000 };
-  return tokenCache.value;
+  // Coalesce concurrent refreshes: /bootstrap fires 9 reads in parallel, and on a
+  // cold instance they would otherwise each POST to the token endpoint at once —
+  // Zoho rejects the burst and the request 502s. Share a single in-flight refresh.
+  if (refreshing) return refreshing;
+  refreshing = (async () => {
+    const body = new URLSearchParams({ refresh_token: REFRESH_TOKEN, client_id: CLIENT_ID, client_secret: CLIENT_SECRET, grant_type: 'refresh_token' });
+    const res = await fetch(`${ACCOUNTS_HOST}/oauth/v2/token`, { method: 'POST', body });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok || !json.access_token) { const err = new Error(`Could not refresh the Zoho access token: ${json.error || res.status}`); err.status = 502; throw err; }
+    tokenCache = { value: json.access_token, expiresAt: Date.now() + ((json.expires_in || 3600) - 60) * 1000 };
+    return tokenCache.value;
+  })();
+  try { return await refreshing; } finally { refreshing = null; }
 }
 async function zoho(path, { method = 'GET', body, retry = true } = {}) {
   const token = await accessToken();
