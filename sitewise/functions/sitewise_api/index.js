@@ -21,6 +21,8 @@ const express = require('express');
 const crypto = require('crypto');
 const app = express();
 app.use(express.json({ limit: '256kb' }));
+// Never let the browser cache API responses — a stale /bootstrap would show old data.
+app.use((_req, res, next) => { res.set('Cache-Control', 'no-store'); next(); });
 
 // ---------------------------------------------------------------- config
 const ACCOUNTS_HOST = process.env.ZOHO_ACCOUNTS_HOST || 'https://accounts.zoho.in';
