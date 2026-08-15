@@ -363,13 +363,14 @@
     var isNum=function(i){ return r.numCols.indexOf(i)>-1; };
     var thead='<tr>'+r.cols.map(function(c,i){ return '<th'+(isNum(i)?' class="num"':'')+'>'+esc(c)+'</th>'; }).join('')+'</tr>';
     var tbody=r.rows.length
-      ? r.rows.map(function(row){ return '<tr>'+row.map(function(c,i){ return '<td'+(isNum(i)?' class="num"':'')+'>'+(i===0?'<span class="cell-strong">'+esc(c)+'</span>':esc(c))+'</td>'; }).join('')+'</tr>'; }).join('')
-      : '<tr><td colspan="'+r.cols.length+'" class="cell-sub" style="padding:22px">Nothing to report.</td></tr>';
+      ? r.rows.map(function(row){ return '<tr data-search="'+esc(row.join(' ').toLowerCase())+'">'+row.map(function(c,i){ return '<td'+(isNum(i)?' class="num"':'')+'>'+(i===0?'<span class="cell-strong">'+esc(c)+'</span>':esc(c))+'</td>'; }).join('')+'</tr>'; }).join('')
+      : '<tr><td colspan="'+r.cols.length+'" class="tbl-empty">Nothing to report.</td></tr>';
     return head('Reports','Generated live from Zoho Projects. Export to Excel (CSV) or print to PDF.')+
       '<div class="tabs">'+tabs+'</div>'+
-      '<div class="card"><div class="card__head"><h3>'+esc(r.label)+'</h3><div class="topbar__actions">'+
+      '<div class="card filterable" data-cols="'+r.cols.length+'"><div class="card__head"><h3>'+esc(r.label)+'</h3><div class="topbar__actions">'+
         '<button class="btn" id="exp-csv">'+icon('download')+'Excel (CSV)</button>'+
         '<button class="btn" id="exp-pdf">'+icon('printer')+'PDF / Print</button></div></div>'+
+        toolbar(null)+
       '<div class="tablewrap"><table class="data"><thead>'+thead+'</thead><tbody>'+tbody+'</tbody></table></div></div>';
   };
 
